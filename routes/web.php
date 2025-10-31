@@ -17,6 +17,7 @@ Route::get('/categoria/{slug}', [HomeController::class, 'category'])->name('cate
 Route::get('/pedido', [OrderController::class, 'create'])->name('order.create');
 Route::post('/pedido', [OrderController::class, 'store'])->name('order.store');
 Route::get('/pedido/sucesso/{id}', [OrderController::class, 'success'])->name('order.success');
+Route::get('/pedido/buscar-cliente', [OrderController::class, 'findCustomerByCpf'])->name('order.find-customer');
 
 // Autenticação
 Route::get('/login', [\App\Http\Controllers\Auth\LoginController::class, 'showLoginForm'])->name('login');

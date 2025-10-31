@@ -20,15 +20,65 @@ class OrderService
     public function createOrder(array $data): Order
     {
         return DB::transaction(function () use ($data) {
+            // Create or update customer
+            $personType = $data['customer_person_type'] ?? 'PF';
+            $cep = preg_replace('/\D/', '', $data['customer_cep'] ?? '');
+            
+            $customerData = [
+                'person_type' => $personType,
+                'name' => $data['customer_name'],
+                'email' => $data['customer_email'],
+                'phone' => preg_replace('/\D/', '', $data['customer_phone']),
+                'cep' => $cep,
+                'street' => $data['customer_street'] ?? null,
+                'number' => $data['customer_number'] ?? null,
+                'complement' => $data['customer_complement'] ?? null,
+                'district' => $data['customer_district'] ?? null,
+                'city' => $data['customer_city'] ?? null,
+                'state' => strtoupper($data['customer_state'] ?? ''),
+                'is_active' => true,
+            ];
+            
+            if ($personType === 'PF') {
+                $cpf = preg_replace('/\D/', '', $data['customer_cpf'] ?? '');
+                $customer = Customer::updateOrCreate(
+                    ['cpf' => $cpf],
+                    array_merge($customerData, ['cpf' => $cpf, 'birth_date' => $data['customer_birth_date'] ?? null])
+                );
+            } else {
+                $cnpj = preg_replace('/\D/', '', $data['customer_cnpj'] ?? '');
+                $customer = Customer::updateOrCreate(
+                    ['cnpj' => $cnpj],
+                    array_merge($customerData, ['cnpj' => $cnpj])
+                );
+            }
+
             // If a customer is referenced, hydrate order customer fields from Customer record
             if (!empty($data['customer_id'])) {
                 $customer = Customer::findOrFail($data['customer_id']);
-                $data['customer_name'] = $customer->name;
-                $data['customer_cpf'] = preg_replace('/\D/', '', (string) $customer->cpf);
-                $data['customer_email'] = $customer->email ?? '';
-                $data['customer_phone'] = $customer->phone ?? '';
-                $data['customer_address'] = $customer->address ?? '';
             }
+            
+            // Set order customer fields
+            $data['customer_name'] = $customer->name;
+            if ($personType === 'PF') {
+                $data['customer_cpf'] = $customer->cpf ?? '';
+            } else {
+                $data['customer_cpf'] = $customer->cnpj ?? ''; // Usa CNPJ no campo customer_cpf para compatibilidade
+            }
+            $data['customer_email'] = $customer->email ?? '';
+            $data['customer_phone'] = $customer->phone ?? '';
+            
+            // Build address string from components
+            $addressParts = array_filter([
+                $customer->street,
+                $customer->number,
+                $customer->complement,
+                $customer->district,
+                $customer->city,
+                $customer->state,
+                $customer->cep ? 'CEP: ' . $customer->cep : null
+            ]);
+            $data['customer_address'] = implode(', ', $addressParts);
             $items = $data['items'];
             unset($data['items']);
 

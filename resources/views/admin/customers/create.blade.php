@@ -72,7 +72,7 @@
                     </div>
                 @endif
 
-                <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                     <!-- Person Type -->
                     <div>
                         <label for="person_type" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -81,8 +81,8 @@
                         <div class="mt-1">
                             <select name="person_type" 
                                     id="person_type" 
-                                    class="form-input @error('person_type') border-red-300 focus:border-red-500 focus:ring-red-500 @enderror" 
-                
+                                    required
+                                    class="form-input @error('person_type') border-red-300 focus:border-red-500 focus:ring-red-500 @enderror">
                                 <option value="PF" {{ old('person_type', 'PF') == 'PF' ? 'selected' : '' }}>Pessoa Física</option>
                                 <option value="PJ" {{ old('person_type') == 'PJ' ? 'selected' : '' }}>Pessoa Jurídica</option>
                             </select>
@@ -93,7 +93,7 @@
                     </div>
 
                     <!-- Name -->
-                    <div>
+                    <div class="sm:col-span-2">
                         <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                             <span id="name_label">Nome Completo</span> *
                         </label>
@@ -310,20 +310,20 @@
                         @enderror
                     </div>
 
-                    <!-- Neighborhood -->
+                    <!-- District -->
                     <div>
-                        <label for="neighborhood" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        <label for="district" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                             Bairro
                         </label>
                         <div class="mt-1">
                             <input type="text" 
-                                   name="neighborhood" 
-                                   id="neighborhood"
-                                   value="{{ old('neighborhood') }}" 
-                                   class="form-input @error('neighborhood') border-red-300 focus:border-red-500 focus:ring-red-500 @enderror"
+                                   name="district" 
+                                   id="district"
+                                   value="{{ old('district') }}" 
+                                   class="form-input @error('district') border-red-300 focus:border-red-500 focus:ring-red-500 @enderror"
                                    placeholder="Centro">
                         </div>
-                        @error('neighborhood')
+                        @error('district')
                             <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                         @enderror
                     </div>
@@ -349,41 +349,16 @@
                     <!-- State -->
                     <div>
                         <label for="state" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Estado
+                            Estado (UF)
                         </label>
                         <div class="mt-1">
-                            <select name="state" 
-                                    id="state" 
-                                    class="form-input @error('state') border-red-300 focus:border-red-500 focus:ring-red-500 @enderror">
-                                <option value="">Selecione...</option>
-                                <option value="AC" {{ old('state') == 'AC' ? 'selected' : '' }}>Acre</option>
-                                <option value="AL" {{ old('state') == 'AL' ? 'selected' : '' }}>Alagoas</option>
-                                <option value="AP" {{ old('state') == 'AP' ? 'selected' : '' }}>Amapá</option>
-                                <option value="AM" {{ old('state') == 'AM' ? 'selected' : '' }}>Amazonas</option>
-                                <option value="BA" {{ old('state') == 'BA' ? 'selected' : '' }}>Bahia</option>
-                                <option value="CE" {{ old('state') == 'CE' ? 'selected' : '' }}>Ceará</option>
-                                <option value="DF" {{ old('state') == 'DF' ? 'selected' : '' }}>Distrito Federal</option>
-                                <option value="ES" {{ old('state') == 'ES' ? 'selected' : '' }}>Espírito Santo</option>
-                                <option value="GO" {{ old('state') == 'GO' ? 'selected' : '' }}>Goiás</option>
-                                <option value="MA" {{ old('state') == 'MA' ? 'selected' : '' }}>Maranhão</option>
-                                <option value="MT" {{ old('state') == 'MT' ? 'selected' : '' }}>Mato Grosso</option>
-                                <option value="MS" {{ old('state') == 'MS' ? 'selected' : '' }}>Mato Grosso do Sul</option>
-                                <option value="MG" {{ old('state') == 'MG' ? 'selected' : '' }}>Minas Gerais</option>
-                                <option value="PA" {{ old('state') == 'PA' ? 'selected' : '' }}>Pará</option>
-                                <option value="PB" {{ old('state') == 'PB' ? 'selected' : '' }}>Paraíba</option>
-                                <option value="PR" {{ old('state') == 'PR' ? 'selected' : '' }}>Paraná</option>
-                                <option value="PE" {{ old('state') == 'PE' ? 'selected' : '' }}>Pernambuco</option>
-                                <option value="PI" {{ old('state') == 'PI' ? 'selected' : '' }}>Piauí</option>
-                                <option value="RJ" {{ old('state') == 'RJ' ? 'selected' : '' }}>Rio de Janeiro</option>
-                                <option value="RN" {{ old('state') == 'RN' ? 'selected' : '' }}>Rio Grande do Norte</option>
-                                <option value="RS" {{ old('state') == 'RS' ? 'selected' : '' }}>Rio Grande do Sul</option>
-                                <option value="RO" {{ old('state') == 'RO' ? 'selected' : '' }}>Rondônia</option>
-                                <option value="RR" {{ old('state') == 'RR' ? 'selected' : '' }}>Roraima</option>
-                                <option value="SC" {{ old('state') == 'SC' ? 'selected' : '' }}>Santa Catarina</option>
-                                <option value="SP" {{ old('state') == 'SP' ? 'selected' : '' }}>São Paulo</option>
-                                <option value="SE" {{ old('state') == 'SE' ? 'selected' : '' }}>Sergipe</option>
-                                <option value="TO" {{ old('state') == 'TO' ? 'selected' : '' }}>Tocantins</option>
-                            </select>
+                            <input type="text" 
+                                   name="state" 
+                                   id="state"
+                                   value="{{ old('state') }}" 
+                                   maxlength="2"
+                                   class="form-input @error('state') border-red-300 focus:border-red-500 focus:ring-red-500 @enderror"
+                                   placeholder="MT">
                         </div>
                         @error('state')
                             <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
@@ -403,18 +378,17 @@
                 <div class="space-y-6">
                     <!-- Status -->
                     <div>
-                        <label for="status" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Status
+                        <label class="flex items-center">
+                            <input type="checkbox" 
+                                   name="is_active" 
+                                   value="1"
+                                   {{ old('is_active', true) ? 'checked' : '' }}
+                                   class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                            <span class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Cliente Ativo
+                            </span>
                         </label>
-                        <div class="mt-1">
-                            <select name="status" 
-                                    id="status" 
-                                    class="form-input @error('status') border-red-300 focus:border-red-500 focus:ring-red-500 @enderror">
-                                <option value="active" {{ old('status', 'active') == 'active' ? 'selected' : '' }}>Ativo</option>
-                                <option value="inactive" {{ old('status') == 'inactive' ? 'selected' : '' }}>Inativo</option>
-                            </select>
-                        </div>
-                        @error('status')
+                        @error('is_active')
                             <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                         @enderror
                     </div>
@@ -463,5 +437,174 @@
     </form>
 </div>
 
-<!-- JavaScript temporariamente removido para teste -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const personTypeSelect = document.getElementById('person_type');
+    const cpfGroup = document.getElementById('cpf_group');
+    const cnpjGroup = document.getElementById('cnpj_group');
+    const birthGroup = document.getElementById('birth_date_group');
+    const nameLabel = document.getElementById('name_label');
+    
+    // Declarar variáveis de input primeiro
+    const cpfInput = document.getElementById('cpf');
+    const cnpjInput = document.getElementById('cnpj');
+
+    function togglePessoa() {
+        const tipo = personTypeSelect.value;
+        
+        if (tipo === 'PJ') {
+            cnpjGroup.classList.remove('hidden');
+            cpfGroup.classList.add('hidden');
+            if (birthGroup) birthGroup.classList.add('hidden');
+            if (cpfInput) cpfInput.required = false;
+            if (cnpjInput) cnpjInput.required = true;
+            if (nameLabel) nameLabel.textContent = 'Razão Social *';
+        } else {
+            cpfGroup.classList.remove('hidden');
+            cnpjGroup.classList.add('hidden');
+            if (birthGroup) birthGroup.classList.remove('hidden');
+            if (cpfInput) cpfInput.required = true;
+            if (cnpjInput) cnpjInput.required = false;
+            if (nameLabel) nameLabel.textContent = 'Nome Completo';
+        }
+    }
+
+    if (personTypeSelect) {
+        personTypeSelect.addEventListener('change', togglePessoa);
+        togglePessoa(); // Inicializar
+    }
+
+    // ===== Máscaras e validações CPF/CNPJ =====
+    function onlyDigits(v){return (v||'').replace(/\D/g,'');}
+    function maskCPF(v){v=onlyDigits(v).slice(0,11);return v.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2');}
+    function maskCNPJ(v){v=onlyDigits(v).slice(0,14);return v.replace(/(\d{2})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1/$2').replace(/(\d{4})(\d{1,2})$/,'$1-$2');}
+    function isValidCPF(cpf){cpf=onlyDigits(cpf);if(!cpf || cpf.length!==11||/(\d)\1{10}/.test(cpf))return false;for(let t=9;t<11;t++){let d=0;for(let c=0;c<t;c++){d+=cpf[c]*((t+1)-c);}d=((10*d)%11)%10;if(cpf[t]!=d)return false;}return true;}
+    function isValidCNPJ(cnpj){cnpj=onlyDigits(cnpj);if(!cnpj || cnpj.length!==14||/(\d)\1{13}/.test(cnpj))return false;let t=[5,4,3,2,9,8,7,6,5,4,3,2],s=0;for(let i=0;i<12;i++)s+=cnpj[i]*t[i];let r=s%11,d1=(r<2)?0:11-r;t=[6,5,4,3,2,9,8,7,6,5,4,3,2];s=0;for(let i=0;i<13;i++)s+=cnpj[i]*t[i];r=s%11;let d2=(r<2)?0:11-r;return (cnpj[12]==d1 && cnpj[13]==d2);} 
+    
+    const cpfError=document.getElementById('cpf_error');
+    if(cpfInput){
+      const applyCpf=()=>{
+        const masked=maskCPF(cpfInput.value);
+        cpfInput.value=masked;
+        const ok=isValidCPF(cpfInput.value);
+        if(masked && !ok){
+          cpfInput.classList.add('border-red-500');
+          cpfError.classList.remove('hidden');
+        } else {
+          cpfInput.classList.remove('border-red-500');
+          cpfError.classList.add('hidden');
+        }
+      };
+      cpfInput.addEventListener('input',applyCpf);cpfInput.addEventListener('blur',applyCpf);
+    }
+    
+    const cnpjError=document.getElementById('cnpj_error');
+    if(cnpjInput){
+      const applyCnpj=()=>{
+        const masked=maskCNPJ(cnpjInput.value);
+        cnpjInput.value=masked;
+        const ok=isValidCNPJ(cnpjInput.value);
+        if(masked && !ok){
+          cnpjInput.classList.add('border-red-500');
+          cnpjError.classList.remove('hidden');
+        } else {
+          cnpjInput.classList.remove('border-red-500');
+          cnpjError.classList.add('hidden');
+        }
+      };
+      cnpjInput.addEventListener('input',applyCnpj);cnpjInput.addEventListener('blur',applyCnpj);
+    }
+    
+    // Máscara telefone
+    const phoneInput = document.getElementById('phone');
+    if (phoneInput) {
+        // aplica máscara inicial se vier sem formatação
+        (function(){
+            let v = phoneInput.value || '';
+            v = v.replace(/\D/g,'');
+            if (v.length === 10) phoneInput.value = v.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+            else if (v.length === 11) phoneInput.value = v.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+        })();
+        phoneInput.addEventListener('input', function(){
+            let v = this.value.replace(/\D/g,'').slice(0,11);
+            if (v.length > 10) {
+                this.value = v.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+            } else if (v.length > 6) {
+                this.value = v.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
+            } else if (v.length > 2) {
+                this.value = v.replace(/(\d{2})(\d{0,5})/, '($1) $2');
+            } else {
+                this.value = v.replace(/(\d{0,2})/, '($1');
+            }
+        });
+    }
+    
+    // Máscara de CEP e integração ViaCEP
+    const cepInput = document.getElementById('zip_code');
+    if (cepInput) {
+        // aplica máscara inicial se vier sem formatação
+        (function(){
+            let v = cepInput.value || '';
+            v = v.replace(/\D/g,'');
+            if (v.length === 8) cepInput.value = v.replace(/(\d{5})(\d{3})/, '$1-$2');
+        })();
+        cepInput.addEventListener('input', function(){
+            let v = this.value.replace(/\D/g,'').slice(0,8);
+            if (v.length > 5) {
+                this.value = v.replace(/(\d{5})(\d{3})/, '$1-$2');
+            } else {
+                this.value = v;
+            }
+            
+            // Buscar CEP quando completo
+            if (v.length === 8) {
+                fetchCep(v);
+            }
+        });
+        
+        // Integração ViaCEP
+        let cepSearchTimeout;
+        function fetchCep(cep) {
+            clearTimeout(cepSearchTimeout);
+            cepSearchTimeout = setTimeout(async () => {
+                const loading = document.getElementById('cep_loading');
+                try {
+                    if (loading) loading.classList.remove('hidden');
+                    const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+                    const data = await response.json();
+                    
+                    if (!data.erro && data) {
+                        document.getElementById('street').value = data.logradouro || '';
+                        document.getElementById('district').value = data.bairro || '';
+                        document.getElementById('city').value = data.localidade || '';
+                        document.getElementById('state').value = data.uf || '';
+                        // Focar no campo número após preencher
+                        document.getElementById('number').focus();
+                    }
+                } catch (error) {
+                    console.error('Erro ao buscar CEP:', error);
+                } finally {
+                    if (loading) loading.classList.add('hidden');
+                }
+            }, 300);
+        }
+    }
+    
+    // Máscara para estado (UF) - converter para maiúsculas e limitar a 2 caracteres
+    const stateInput = document.getElementById('state');
+    if (stateInput) {
+        stateInput.addEventListener('input', function(){
+            this.value = this.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0,2);
+        });
+    }
+
+    // Sanitiza CPF/CNPJ, telefone e CEP antes de enviar
+    document.querySelector('form').addEventListener('submit',function(){
+      if(cpfInput) cpfInput.value=onlyDigits(cpfInput.value);
+      if(cnpjInput) cnpjInput.value=onlyDigits(cnpjInput.value);
+      if (phoneInput) phoneInput.value = phoneInput.value.replace(/\D/g,'');
+      if (cepInput) cepInput.value = cepInput.value.replace(/\D/g,'');
+    });
+});
+</script>
 @endsection

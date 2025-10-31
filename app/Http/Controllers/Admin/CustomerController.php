@@ -48,6 +48,7 @@ class CustomerController extends Controller
             'cpf' => $request->cpf ? preg_replace('/\D/', '', $request->cpf) : null,
             'cnpj' => $request->cnpj ? preg_replace('/\D/', '', $request->cnpj) : null,
             'phone' => $request->phone ? preg_replace('/\D/', '', $request->phone) : null,
+            'cep' => $request->zip_code ? preg_replace('/\D/', '', $request->zip_code) : null,
         ]);
 
         $validated = $request->validate([
@@ -130,6 +131,7 @@ class CustomerController extends Controller
             'cpf' => $request->cpf ? preg_replace('/\D/', '', $request->cpf) : null,
             'cnpj' => $request->cnpj ? preg_replace('/\D/', '', $request->cnpj) : null,
             'phone' => $request->phone ? preg_replace('/\D/', '', $request->phone) : null,
+            'cep' => ($request->zip_code ? preg_replace('/\D/', '', $request->zip_code) : null) ?? ($request->cep ? preg_replace('/\D/', '', $request->cep) : null),
         ]);
 
         $validated = $request->validate([
