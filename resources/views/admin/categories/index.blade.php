@@ -77,22 +77,22 @@
     <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
         @if($categories->count() > 0)
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <table class="w-full table-fixed divide-y divide-gray-200 dark:divide-gray-700">
                     <thead class="bg-gray-50 dark:bg-gray-700">
                         <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                            <th scope="col" class="w-2/5 px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                 Categoria
                             </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                            <th scope="col" class="w-1/5 px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                 Slug
                             </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                            <th scope="col" class="w-1/6 px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                 Status
                             </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                            <th scope="col" class="w-1/6 px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                 Produtos
                             </th>
-                            <th scope="col" class="relative px-6 py-3">
+                            <th scope="col" class="w-20 px-4 py-3 relative">
                                 <span class="sr-only">Ações</span>
                             </th>
                         </tr>
@@ -100,8 +100,8 @@
                     <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                         @foreach($categories as $category)
                             <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200">
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
+                                <td class="px-4 py-4">
+                                    <div class="flex items-start">
                                         <div class="flex-shrink-0 h-10 w-10">
                                             <div class="h-10 w-10 rounded-lg bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center">
                                                 <svg class="h-6 w-6 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -109,24 +109,24 @@
                                                 </svg>
                                             </div>
                                         </div>
-                                        <div class="ml-4">
-                                            <div class="text-sm font-medium text-gray-900 dark:text-white">
+                                        <div class="ml-3 min-w-0 flex-1">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-white truncate">
                                                 {{ $category->name }}
                                             </div>
                                             @if($category->description)
-                                                <div class="text-sm text-gray-500 dark:text-gray-400 line-clamp-1">
+                                                <div class="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
                                                     {{ $category->description }}
                                                 </div>
                                             @endif
                                         </div>
                                     </div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-gray-500 dark:text-gray-400 font-mono">
+                                <td class="px-4 py-4">
+                                    <div class="text-sm text-gray-500 dark:text-gray-400 font-mono truncate">
                                         {{ $category->slug }}
                                     </div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
+                                <td class="px-4 py-4">
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $category->is_active ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300' }}">
                                         <svg class="w-1.5 h-1.5 mr-1.5 {{ $category->is_active ? 'text-green-400' : 'text-gray-400' }}" fill="currentColor" viewBox="0 0 8 8">
                                             <circle cx="4" cy="4" r="3"/>
@@ -134,11 +134,11 @@
                                         {{ $category->is_active ? 'Ativa' : 'Inativa' }}
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                    {{ $category->products_count ?? 0 }} produtos
+                                <td class="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">
+                                    {{ $category->products_count ?? 0 }}
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <div class="flex items-center justify-end space-x-2">
+                                <td class="px-4 py-4 text-right text-sm font-medium">
+                                    <div class="flex items-center justify-end space-x-1">
                                         <a href="{{ route('admin.categories.edit', $category) }}" 
                                            class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors duration-200"
                                            title="Editar categoria">
