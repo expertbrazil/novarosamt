@@ -12,16 +12,22 @@
     <!-- Navigation -->
     <nav class="bg-white dark:bg-gray-800 shadow-lg sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
+            <div class="flex justify-between items-center py-4">
                 <!-- Logo -->
-                <div class="flex items-center">
+                <div class="flex items-center py-2">
                     <a href="{{ route('home') }}" class="flex items-center space-x-3">
-                        <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600">
-                            <svg class="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z" clip-rule="evenodd" />
-                            </svg>
-                        </div>
-                        <span class="text-xl font-bold text-gray-900 dark:text-white">Nova Rosa MT</span>
+                        @if(isset($settings['logo']) && !empty($settings['logo']))
+                            <img src="{{ Storage::url($settings['logo']) }}" 
+                                 alt="Logo Nova Rosa MT" 
+                                 class="h-16 w-auto object-contain">
+                        @else
+                            <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600">
+                                <svg class="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <span class="text-xl font-bold text-gray-900 dark:text-white">Nova Rosa MT</span>
+                        @endif
                     </a>
                 </div>
 
@@ -83,12 +89,18 @@
                 <!-- Company Info -->
                 <div class="space-y-4">
                     <div class="flex items-center space-x-3">
-                        <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600">
-                            <svg class="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z" clip-rule="evenodd" />
-                            </svg>
-                        </div>
-                        <span class="text-xl font-bold">Nova Rosa MT</span>
+                        @if(isset($settings['logo']) && !empty($settings['logo']))
+                            <img src="{{ Storage::url($settings['logo']) }}" 
+                                 alt="Logo Nova Rosa MT" 
+                                 class="h-14 w-auto object-contain">
+                        @else
+                            <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600">
+                                <svg class="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <span class="text-xl font-bold">Nova Rosa MT</span>
+                        @endif
                     </div>
                     <p class="text-gray-300 text-sm">
                         Produtos de limpeza profissionais e domésticos de alta qualidade para todas as suas necessidades.

@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\CustomerController;
+use App\Http\Controllers\Admin\SettingsController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\StockMovementController;
 
@@ -29,6 +30,7 @@ Route::middleware(['auth', 'role:admin|gerente|vendedor'])->prefix('admin')->nam
     Route::middleware(['role:admin|gerente'])->group(function () {
         Route::resource('products', ProductController::class);
         Route::post('products/{product}/toggle', [ProductController::class, 'toggle'])->name('products.toggle');
+        Route::get('products/export/zero-stock', [ProductController::class, 'exportZeroStock'])->name('products.export.zero-stock');
         Route::resource('categories', CategoryController::class)->except(['show']);
         Route::post('categories/{category}/toggle', [CategoryController::class, 'toggle'])->name('categories.toggle');
         
@@ -50,5 +52,9 @@ Route::middleware(['auth', 'role:admin|gerente|vendedor'])->prefix('admin')->nam
         Route::get('stock', [StockMovementController::class, 'index'])->name('stock.index');
         Route::get('stock/create', [StockMovementController::class, 'create'])->name('stock.create');
         Route::post('stock', [StockMovementController::class, 'store'])->name('stock.store');
+
+        // Parâmetros do Sistema
+        Route::get('settings', [SettingsController::class, 'index'])->name('settings.index');
+        Route::put('settings', [SettingsController::class, 'update'])->name('settings.update');
     });
 });

@@ -45,8 +45,11 @@ class ProductController extends Controller
 
         $products = $query->orderBy('created_at', 'desc')->paginate(15)->withQueryString();
         $categories = Category::all();
+        
+        // Contar produtos com estoque zerado
+        $zeroStockCount = Product::where('stock', '<=', 0)->count();
 
-        return view('admin.products.index', compact('products', 'categories'));
+        return view('admin.products.index', compact('products', 'categories', 'zeroStockCount'));
     }
 
     public function create()
@@ -161,6 +164,57 @@ class ProductController extends Controller
                   ->where('order_items.product_id', $product->id);
             })->get();
         return view('admin.products.show', compact('product','orders','customers'));
+    }
+
+    public function exportZeroStock()
+    {
+        $products = Product::with('category')
+            ->where('stock', '<=', 0)
+            ->orderBy('category_id')
+            ->orderBy('name')
+            ->get();
+
+        $filename = 'produtos_estoque_zerado_' . now()->format('Y-m-d_H-i-s') . '.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        $callback = function() use ($products) {
+            $file = fopen('php://output', 'w');
+            
+            // Adicionar BOM para UTF-8 (para abrir corretamente no Excel)
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+            
+            // Cabeçalho
+            fputcsv($file, [
+                'Código',
+                'Nome',
+                'Categoria',
+                'Descrição',
+                'Preço',
+                'Estoque',
+                'Unidade',
+            ], ';');
+
+            // Dados
+            foreach ($products as $product) {
+                fputcsv($file, [
+                    $product->id,
+                    $product->name,
+                    $product->category->name ?? 'Sem categoria',
+                    $product->description ?? '',
+                    'R$ ' . number_format($product->price, 2, ',', '.'),
+                    $product->stock,
+                    $product->unit ?? '',
+                ], ';');
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 }
 

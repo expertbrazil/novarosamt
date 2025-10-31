@@ -14,7 +14,19 @@
                 Gerencie o catálogo de produtos do sistema
             </p>
         </div>
-        <div class="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
+        <div class="mt-4 sm:ml-16 sm:mt-0 sm:flex-none flex space-x-3">
+            <a href="{{ route('admin.products.index', ['stock_max' => 0]) }}" 
+               class="btn-secondary relative">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.618 5.984A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016zM12 9v2m0 4h.01"/>
+                </svg>
+                Estoque Zerado
+                @if($zeroStockCount > 0)
+                    <span class="absolute -top-2 -right-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
+                        {{ $zeroStockCount }}
+                    </span>
+                @endif
+            </a>
             <a href="{{ route('admin.products.create') }}" 
                class="btn-primary">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -24,6 +36,26 @@
             </a>
         </div>
     </div>
+
+    @if($zeroStockCount > 0 && !request()->has('stock_max'))
+        <div class="rounded-md bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-red-800 dark:text-red-200">
+                        Atenção: {{ $zeroStockCount }} produto(s) com estoque zerado!
+                    </h3>
+                    <div class="mt-2 text-sm text-red-700 dark:text-red-300">
+                        <p>Clique em "Estoque Zerado" para visualizar a lista completa e enviar ao fornecedor.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
 
     <!-- Filters -->
     <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
@@ -125,6 +157,33 @@
             </form>
         </div>
     </div>
+
+    @if(request()->has('stock_max') && request('stock_max') == 0)
+        <div class="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-lg p-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <svg class="h-5 w-5 text-indigo-600 dark:text-indigo-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <div>
+                        <h3 class="text-sm font-medium text-indigo-800 dark:text-indigo-200">
+                            Produtos com estoque zerado
+                        </h3>
+                        <p class="text-sm text-indigo-700 dark:text-indigo-300">
+                            Exporte esta lista para enviar ao fornecedor
+                        </p>
+                    </div>
+                </div>
+                <a href="{{ route('admin.products.export.zero-stock') }}" 
+                   class="btn-primary">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    Exportar para CSV
+                </a>
+            </div>
+        </div>
+    @endif
 
     <!-- Table -->
     <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">

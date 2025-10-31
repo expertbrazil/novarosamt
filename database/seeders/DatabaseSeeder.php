@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\User;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\Settings;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
@@ -108,5 +109,16 @@ class DatabaseSeeder extends Seeder
             'stock' => 0,
             'is_active' => true,
         ]);
+
+        // Criar configurações iniciais
+        Settings::set('whatsapp_number', '', 'string', 'Número do WhatsApp');
+        Settings::set('whatsapp_message', 'Olá! Gostaria de mais informações sobre seus produtos.', 'text', 'Mensagem padrão do WhatsApp');
+        Settings::set('smtp_host', '', 'string', 'Host do servidor SMTP');
+        Settings::set('smtp_port', '587', 'integer', 'Porta do servidor SMTP');
+        Settings::set('smtp_username', '', 'string', 'Usuário do servidor SMTP');
+        Settings::set('smtp_password', '', 'string', 'Senha do servidor SMTP');
+        Settings::set('smtp_encryption', '', 'string', 'Criptografia SMTP');
+        Settings::set('smtp_from_address', '', 'string', 'Email remetente');
+        Settings::set('smtp_from_name', 'Nova Rosa MT', 'string', 'Nome remetente');
     }
 }
