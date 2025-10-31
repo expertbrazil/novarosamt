@@ -44,7 +44,12 @@ class OrderController extends Controller
         $categories = Category::where('is_active', true)
             ->with(['products' => function ($query) {
                 $query->where('is_active', true)->where('stock', '>', 0);
-            }])->get();
+            }])
+            ->get()
+            ->filter(function ($category) {
+                return $category->products->isNotEmpty();
+            })
+            ->values();
 
         return view('admin.orders.create', [
             'customers' => $customers,

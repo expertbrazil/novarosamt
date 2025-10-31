@@ -17,11 +17,20 @@ class OrderController extends Controller
     {
         $categories = \App\Models\Category::where('is_active', true)
             ->with(['products' => function ($query) {
-                $query->where('is_active', true)->orderBy('name');
+                $query->where('is_active', true)
+                      ->where('stock', '>', 0)
+                      ->orderBy('name');
             }])
-            ->get();
+            ->get()
+            ->filter(function ($category) {
+                return $category->products->isNotEmpty();
+            })
+            ->values();
 
-        $allProducts = \App\Models\Product::where('is_active', true)->orderBy('name')->get();
+        $allProducts = \App\Models\Product::where('is_active', true)
+            ->where('stock', '>', 0)
+            ->orderBy('name')
+            ->get();
 
         return view('orders.create', compact('categories', 'allProducts'));
     }

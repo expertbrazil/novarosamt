@@ -111,14 +111,6 @@
                                     </svg>
                                 </div>
                                 @endif
-                                
-                                @if($product->stock <= 5)
-                                <div class="absolute top-2 right-2">
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
-                                        Estoque baixo
-                                    </span>
-                                </div>
-                                @endif
                             </div>
                             
                             <div class="p-6">
@@ -128,16 +120,38 @@
                                 <div class="flex items-center justify-between">
                                     <div>
                                         <span class="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
-                                            R$ {{ number_format($product->price, 2, ',', '.') }}
+                                            R$ {{ number_format($product->sale_price ?? $product->price, 2, ',', '.') }}
                                         </span>
+                                        @if($product->unit || $product->unit_value)
                                         <div class="flex items-center mt-1">
                                             <svg class="w-4 h-4 text-gray-400 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
                                             </svg>
                                             <span class="text-sm text-gray-500 dark:text-gray-400">
-                                                Estoque: {{ $product->stock }}
+                                                @php
+                                                    $unitMap = [
+                                                        'l' => 'Litros',
+                                                        'ml' => 'Mililitros',
+                                                        'kg' => 'Quilogramas',
+                                                        'g' => 'Gramas',
+                                                        'un' => 'Unidades',
+                                                        'pc' => 'Peças',
+                                                        'm' => 'Metros',
+                                                        'cm' => 'Centímetros',
+                                                        'm²' => 'Metros Quadrados',
+                                                        'm³' => 'Metros Cúbicos',
+                                                    ];
+                                                    $fullUnit = $unitMap[strtolower($product->unit ?? '')] ?? ($product->unit ?? '');
+                                                    $displayValue = $product->unit_value ? rtrim(rtrim(number_format((float)$product->unit_value, 3, ',', '.'), '0'), ',') : '';
+                                                @endphp
+                                                @if($product->unit_value && $product->unit)
+                                                    {{ $displayValue }} {{ $fullUnit }}
+                                                @elseif($product->unit)
+                                                    {{ $fullUnit }}
+                                                @endif
                                             </span>
                                         </div>
+                                        @endif
                                     </div>
                                 </div>
                             </div>

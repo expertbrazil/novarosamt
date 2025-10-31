@@ -208,16 +208,11 @@
                                 <option value="">Selecione um produto...</option>
                 @foreach($categories as $category)
                                     <optgroup label="{{ $category->name }}">
-                            @foreach($category->products as $product)
+                                        @foreach($category->products as $product)
                                             <option value="{{ $product->id }}" 
                                                     data-price="{{ $product->sale_price ?? $product->price }}" 
                                                     data-stock="{{ $product->stock }}">
-                                                {{ $product->name }} 
-                                                @if($product->stock > 0)
-                                                    (Estoque: {{ $product->stock }})
-                                                @else
-                                                    (Sem estoque)
-                                                @endif
+                                                {{ $product->name }} (Estoque: {{ $product->stock }})
                                             </option>
                                         @endforeach
                                     </optgroup>

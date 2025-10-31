@@ -12,7 +12,8 @@ class HomeController extends Controller
     {
         $categories = Category::where('is_active', true)
             ->with(['products' => function ($query) {
-                $query->where('is_active', true);
+                $query->where('is_active', true)
+                      ->where('stock', '>', 0);
             }])
             ->get();
 
@@ -27,6 +28,7 @@ class HomeController extends Controller
 
         $products = Product::where('category_id', $category->id)
             ->where('is_active', true)
+            ->where('stock', '>', 0)
             ->orderBy('name')
             ->paginate(12);
 
