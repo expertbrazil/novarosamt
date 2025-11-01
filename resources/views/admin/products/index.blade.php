@@ -18,12 +18,24 @@
             <a href="{{ route('admin.products.index', ['stock_max' => 0]) }}" 
                class="btn-secondary relative">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.618 5.984A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016zM12 9v2m0 4h.01"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                 </svg>
                 Estoque Zerado
                 @if($zeroStockCount > 0)
                     <span class="absolute -top-2 -right-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
                         {{ $zeroStockCount }}
+                    </span>
+                @endif
+            </a>
+            <a href="{{ route('admin.products.index', ['low_stock' => 1]) }}" 
+               class="btn-secondary relative">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+                Estoque Mínimo
+                @if($lowStockCount > 0)
+                    <span class="absolute -top-2 -right-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-yellow-600 rounded-full">
+                        {{ $lowStockCount }}
                     </span>
                 @endif
             </a>
@@ -50,7 +62,27 @@
                         Atenção: {{ $zeroStockCount }} produto(s) com estoque zerado!
                     </h3>
                     <div class="mt-2 text-sm text-red-700 dark:text-red-300">
-                        <p>Clique em "Estoque Zerado" para visualizar a lista completa e enviar ao fornecedor.</p>
+                        <p>Clique em "Estoque Zerado" para visualizar a lista completa.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    @if($lowStockCount > 0 && !request()->has('low_stock') && !request()->has('stock_max'))
+        <div class="rounded-md bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 p-4">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                        Atenção: {{ $lowStockCount }} produto(s) com estoque no mínimo!
+                    </h3>
+                    <div class="mt-2 text-sm text-yellow-700 dark:text-yellow-300">
+                        <p>Clique em "Estoque Mínimo" para visualizar a lista completa e enviar ao fornecedor.</p>
                     </div>
                 </div>
             </div>
@@ -159,22 +191,49 @@
     </div>
 
     @if(request()->has('stock_max') && request('stock_max') == 0)
-        <div class="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-lg p-4">
+        <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
             <div class="flex items-center justify-between">
                 <div class="flex items-center">
-                    <svg class="h-5 w-5 text-indigo-600 dark:text-indigo-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="h-5 w-5 text-red-600 dark:text-red-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                     </svg>
                     <div>
-                        <h3 class="text-sm font-medium text-indigo-800 dark:text-indigo-200">
+                        <h3 class="text-sm font-medium text-red-800 dark:text-red-200">
                             Produtos com estoque zerado
                         </h3>
-                        <p class="text-sm text-indigo-700 dark:text-indigo-300">
+                        <p class="text-sm text-red-700 dark:text-red-300">
                             Exporte esta lista para enviar ao fornecedor
                         </p>
                     </div>
                 </div>
                 <a href="{{ route('admin.products.export.zero-stock') }}" 
+                   class="btn-primary">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    Exportar para CSV
+                </a>
+            </div>
+        </div>
+    @endif
+
+    @if(request()->has('low_stock') && request('low_stock') == 1)
+        <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <svg class="h-5 w-5 text-yellow-600 dark:text-yellow-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <div>
+                        <h3 class="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                            Produtos com estoque abaixo do mínimo
+                        </h3>
+                        <p class="text-sm text-yellow-700 dark:text-yellow-300">
+                            Exporte esta lista para enviar ao fornecedor
+                        </p>
+                    </div>
+                </div>
+                <a href="{{ route('admin.products.export.low-stock') }}" 
                    class="btn-primary">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
@@ -200,6 +259,9 @@
                             </th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                 Preço/Estoque
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                Estoque Mínimo
                             </th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                 Status
@@ -265,6 +327,11 @@
                                         <span class="font-medium {{ $product->stock <= 5 ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white' }}">
                                             {{ $product->stock }}
                                         </span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm {{ $product->stock <= $product->min_stock ? 'font-bold text-yellow-600 dark:text-yellow-400' : 'text-gray-900 dark:text-white' }}">
+                                        {{ $product->min_stock }}
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">

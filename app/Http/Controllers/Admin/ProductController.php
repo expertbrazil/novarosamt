@@ -42,14 +42,25 @@ class ProductController extends Controller
         if ($request->filled('stock_max')) {
             $query->where('stock', '<=', (int) $request->stock_max);
         }
+        if ($request->filled('low_stock') && $request->low_stock == 1) {
+            $query->whereRaw('stock <= min_stock')
+                  ->where('stock', '>', 0)
+                  ->where('min_stock', '>', 0);
+        }
 
         $products = $query->orderBy('created_at', 'desc')->paginate(15)->withQueryString();
         $categories = Category::all();
         
+        // Contar produtos com estoque abaixo do mínimo
+        $lowStockCount = Product::whereRaw('stock <= min_stock')
+                                  ->where('stock', '>', 0)
+                                  ->where('min_stock', '>', 0)
+                                  ->count();
+        
         // Contar produtos com estoque zerado
         $zeroStockCount = Product::where('stock', '<=', 0)->count();
 
-        return view('admin.products.index', compact('products', 'categories', 'zeroStockCount'));
+        return view('admin.products.index', compact('products', 'categories', 'lowStockCount', 'zeroStockCount'));
     }
 
     public function create()
@@ -68,6 +79,7 @@ class ProductController extends Controller
             'profit_margin_percent' => 'nullable|numeric|min:0',
             'unit' => 'nullable|in:kg,l,g,ml',
             'unit_value' => 'nullable|numeric|min:0.001',
+            'min_stock' => 'nullable|integer|min:0',
             'image' => 'nullable|image|max:2048',
             'is_active' => 'boolean',
         ]);
@@ -106,6 +118,7 @@ class ProductController extends Controller
             'profit_margin_percent' => 'nullable|numeric|min:0',
             'unit' => 'nullable|in:kg,l,g,ml',
             'unit_value' => 'nullable|numeric|min:0.001',
+            'min_stock' => 'nullable|integer|min:0',
             'image' => 'nullable|image|max:2048',
             'is_active' => 'boolean',
         ]);
@@ -194,7 +207,8 @@ class ProductController extends Controller
                 'Categoria',
                 'Descrição',
                 'Preço',
-                'Estoque',
+                'Estoque Atual',
+                'Estoque Mínimo',
                 'Unidade',
             ], ';');
 
@@ -207,6 +221,62 @@ class ProductController extends Controller
                     $product->description ?? '',
                     'R$ ' . number_format($product->price, 2, ',', '.'),
                     $product->stock,
+                    $product->min_stock,
+                    $product->unit ?? '',
+                ], ';');
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    public function exportLowStock()
+    {
+        $products = Product::with('category')
+            ->whereRaw('stock <= min_stock')
+            ->where('stock', '>', 0)
+            ->where('min_stock', '>', 0)
+            ->orderBy('category_id')
+            ->orderBy('name')
+            ->get();
+
+        $filename = 'produtos_estoque_minimo_' . now()->format('Y-m-d_H-i-s') . '.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        $callback = function() use ($products) {
+            $file = fopen('php://output', 'w');
+            
+            // Adicionar BOM para UTF-8 (para abrir corretamente no Excel)
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+            
+            // Cabeçalho
+            fputcsv($file, [
+                'Código',
+                'Nome',
+                'Categoria',
+                'Descrição',
+                'Preço',
+                'Estoque Atual',
+                'Estoque Mínimo',
+                'Unidade',
+            ], ';');
+
+            // Dados
+            foreach ($products as $product) {
+                fputcsv($file, [
+                    $product->id,
+                    $product->name,
+                    $product->category->name ?? 'Sem categoria',
+                    $product->description ?? '',
+                    'R$ ' . number_format($product->price, 2, ',', '.'),
+                    $product->stock,
+                    $product->min_stock,
                     $product->unit ?? '',
                 ], ';');
             }

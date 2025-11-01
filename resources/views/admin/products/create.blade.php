@@ -226,7 +226,7 @@
                     Unidade e Estoque
                 </h3>
                 
-                <div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
+                <div class="grid grid-cols-1 gap-6 sm:grid-cols-4">
                     <!-- Unit -->
                     <div>
                         <label for="unit" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -289,6 +289,28 @@
                         <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
                             Use o módulo de Estoque para gerenciar
                         </p>
+                    </div>
+
+                    <!-- Min Stock -->
+                    <div>
+                        <label for="min_stock" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Estoque Mínimo
+                        </label>
+                        <div class="mt-1">
+                            <input type="number" 
+                                   name="min_stock" 
+                                   id="min_stock"
+                                   min="0" 
+                                   value="{{ old('min_stock', 0) }}" 
+                                   class="form-input @error('min_stock') border-red-300 focus:border-red-500 focus:ring-red-500 @enderror" 
+                                   placeholder="0">
+                        </div>
+                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                            Quantidade mínima recomendada
+                        </p>
+                        @error('min_stock')
+                            <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                        @enderror
                     </div>
                 </div>
             </div>
