@@ -258,7 +258,13 @@
                                 Categoria
                             </th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                Preço/Estoque
+                                Preço Compra
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                Preço Venda
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                Estoque
                             </th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                 Estoque Mínimo
@@ -319,11 +325,17 @@
                                         @if($product->last_purchase_cost !== null)
                                             <span class="font-medium">R$ {{ number_format($product->last_purchase_cost, 2, ',', '.') }}</span>
                                         @else
-                                            <span class="text-gray-400">Sem preço</span>
+                                            <span class="text-gray-400">-</span>
                                         @endif
                                     </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900 dark:text-white">
+                                        <span class="font-medium">R$ {{ number_format($product->sale_price ?? $product->price, 2, ',', '.') }}</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm text-gray-500 dark:text-gray-400">
-                                        Estoque: 
                                         <span class="font-medium {{ $product->stock <= 5 ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white' }}">
                                             {{ $product->stock }}
                                         </span>
