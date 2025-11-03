@@ -22,3 +22,5 @@ echo "Para aplicar no container Docker, execute:"
 echo "docker-compose exec app bash /var/www/html/fix-permissions.sh"
 
 
+
+

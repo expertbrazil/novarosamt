@@ -12,3 +12,5 @@ Write-Host "Reinicie os containers se necessário:" -ForegroundColor Yellow
 Write-Host "docker-compose restart app" -ForegroundColor Cyan
 
 
+
+
