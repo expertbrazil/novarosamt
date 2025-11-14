@@ -38,6 +38,14 @@ class StockService
             $product->increment('stock', (int) round($quantity));
             $product->last_purchase_cost = $unitCost;
             $product->last_purchase_at = $movement->moved_at;
+            
+            // Atualizar o preço de compra com o custo unitário da entrada
+            $product->price = $unitCost;
+            
+            // Recalcular o preço de venda baseado no novo preço de compra e margem de lucro
+            $margin = (float) ($product->profit_margin_percent ?? 0);
+            $product->sale_price = round($unitCost * (1 + ($margin / 100)), 2);
+            
             $product->save();
 
             return $movement;
