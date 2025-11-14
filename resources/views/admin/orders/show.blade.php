@@ -189,6 +189,9 @@
                         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                             <thead class="bg-gray-50 dark:bg-gray-700">
                                 <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider" style="width: 80px;">
+                                        Foto
+                                    </th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                         Produto
                                     </th>
@@ -207,31 +210,29 @@
                                 @foreach($order->items as $item)
                                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
                                         <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="flex items-center">
-                                                <div class="flex-shrink-0 h-10 w-10">
-                                                    @if($item->product->image)
-                                                        <img src="{{ $item->product->image_url }}" 
-                                                             alt="{{ $item->product->name }}" 
-                                                             class="h-10 w-10 rounded-lg object-cover">
-                                                    @else
-                                                        <div class="h-10 w-10 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center">
-                                                            <svg class="h-6 w-6 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-                                                            </svg>
-                                                        </div>
-                                                    @endif
+                                            @if($item->product->image)
+                                                <img src="{{ $item->product->image_url }}" 
+                                                     alt="{{ $item->product->name }}" 
+                                                     class="h-16 w-16 rounded-lg object-cover">
+                                            @else
+                                                <div class="h-16 w-16 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center">
+                                                    <svg class="h-8 w-8 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                                                    </svg>
                                                 </div>
-                                                <div class="ml-4">
-                                                    <div class="text-sm font-medium text-gray-900 dark:text-white">
-                                                        <a href="{{ route('admin.products.show', $item->product) }}" class="hover:text-indigo-600 dark:hover:text-indigo-400">
-                                                            {{ $item->product->name }}
-                                                        </a>
-                                                    </div>
-                                                    <div class="text-sm text-gray-500 dark:text-gray-400">
-                                                        {{ $item->product->category->name }}
-                                                    </div>
-                                                </div>
+                                            @endif
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-white">
+                                                <a href="{{ route('admin.products.show', $item->product) }}" class="hover:text-indigo-600 dark:hover:text-indigo-400">
+                                                    {{ $item->product->name }}
+                                                </a>
                                             </div>
+                                            @if($item->product->category)
+                                            <div class="text-sm text-gray-500 dark:text-gray-400">
+                                                {{ $item->product->category->name }}
+                                            </div>
+                                            @endif
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                                             {{ $item->quantity }}
@@ -247,7 +248,7 @@
                             </tbody>
                             <tfoot class="bg-gray-50 dark:bg-gray-700">
                                 <tr>
-                                    <th colspan="3" class="px-6 py-4 text-right text-sm font-medium text-gray-900 dark:text-white">
+                                    <th colspan="4" class="px-6 py-4 text-right text-sm font-medium text-gray-900 dark:text-white">
                                         Total do Pedido:
                                     </th>
                                     <th class="px-6 py-4 text-sm font-bold text-indigo-600 dark:text-indigo-400">
@@ -279,11 +280,25 @@
                             <div class="mt-1">
                                 <select name="status" 
                                         id="status"
-                                        class="form-input">
+                                        class="form-input"
+                                        onchange="toggleDeliveredAt(this.value)">
                                     @foreach(\App\Models\Order::getStatusOptions() as $value => $label)
                                         <option value="{{ $value }}" {{ $order->status == $value ? 'selected' : '' }}>{{ $label }}</option>
                                     @endforeach
                                 </select>
+                            </div>
+                        </div>
+                        
+                        <div id="delivered_at_field" style="display: {{ $order->status === 'entregue' ? 'block' : 'none' }};">
+                            <label for="delivered_at" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Data de Entrega
+                            </label>
+                            <div class="mt-1">
+                                <input type="date" 
+                                       name="delivered_at" 
+                                       id="delivered_at"
+                                       value="{{ $order->delivered_at ? $order->delivered_at->format('Y-m-d') : now()->format('Y-m-d') }}"
+                                       class="form-input">
                             </div>
                         </div>
                         
@@ -324,6 +339,15 @@
                         <div>
                             <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">WhatsApp Enviado</dt>
                             <dd class="mt-1 text-sm text-gray-900 dark:text-white">{{ $order->whatsapp_sent_at->format('d/m/Y H:i') }}</dd>
+                        </div>
+                        @endif
+                        
+                        @if($order->delivered_at)
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Data de Entrega</dt>
+                            <dd class="mt-1 text-sm text-gray-900 dark:text-white font-semibold text-green-600 dark:text-green-400">
+                                {{ $order->delivered_at->format('d/m/Y') }}
+                            </dd>
                         </div>
                         @endif
                         
@@ -391,5 +415,16 @@
         </div>
     </div>
 </div>
+
+<script>
+    function toggleDeliveredAt(status) {
+        const field = document.getElementById('delivered_at_field');
+        if (status === 'entregue') {
+            field.style.display = 'block';
+        } else {
+            field.style.display = 'none';
+        }
+    }
+</script>
 @endsection
 

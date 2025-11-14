@@ -122,10 +122,18 @@ class OrderService
         });
     }
 
-    public function updateOrderStatus(Order $order, string $status): bool
+    public function updateOrderStatus(Order $order, string $status, ?string $deliveredAt = null): bool
     {
         $oldStatus = $order->status;
-        $order->update(['status' => $status]);
+        
+        $updateData = ['status' => $status];
+        
+        // Definir data de entrega quando status for "entregue"
+        if ($status === 'entregue' && $oldStatus !== 'entregue') {
+            $updateData['delivered_at'] = $deliveredAt ? \Carbon\Carbon::parse($deliveredAt) : now();
+        }
+        
+        $order->update($updateData);
         
         // Dar baixa no estoque apenas quando mudar para "entregue"
         if ($status === 'entregue' && $oldStatus !== 'entregue') {

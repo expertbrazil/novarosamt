@@ -137,10 +137,17 @@
         <h1>PEDIDO #{{ $order->id }}</h1>
         <div class="header-info">
             <div class="company-info">
-                <div class="info-value" style="font-weight: bold; font-size: 14px;">{{ config('app.name') }}</div>
                 @php
+                    $logoPath = \App\Models\Settings::get('logo');
                     $companyAddress = \App\Models\Settings::get('company_address');
                 @endphp
+                @if($logoPath && \Illuminate\Support\Facades\Storage::disk('public')->exists($logoPath))
+                    <img src="{{ asset('storage/' . $logoPath) }}" 
+                         alt="{{ config('app.name') }}" 
+                         style="max-height: 60px; max-width: 200px; margin-bottom: 10px;">
+                @else
+                    <div class="info-value" style="font-weight: bold; font-size: 14px;">{{ config('app.name') }}</div>
+                @endif
                 @if($companyAddress)
                     <div class="info-value" style="font-size: 10px; color: #6b7280; margin-top: 5px;">
                         {{ $companyAddress }}
@@ -160,6 +167,12 @@
                         </span>
                     </div>
                 </div>
+                @if($order->delivered_at)
+                <div class="info-item" style="margin-top: 10px;">
+                    <div class="info-label">Data de Entrega</div>
+                    <div class="info-value">{{ $order->delivered_at->format('d/m/Y') }}</div>
+                </div>
+                @endif
             </div>
         </div>
     </div>
@@ -223,6 +236,7 @@
         <table>
             <thead>
                 <tr>
+                    <th style="width: 50px;">Foto</th>
                     <th>Produto</th>
                     <th style="text-align: center; width: 80px;">Qtd</th>
                     <th style="text-align: right; width: 100px;">Preço Unit.</th>
@@ -232,6 +246,19 @@
             <tbody>
                 @foreach($order->items as $item)
                 <tr>
+                    <td style="padding: 8px;">
+                        @if($item->product->image)
+                            <img src="{{ asset('storage/' . $item->product->image) }}" 
+                                 alt="{{ $item->product->name }}" 
+                                 style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
+                        @else
+                            <div style="width: 50px; height: 50px; background-color: #f3f4f6; border-radius: 4px; display: flex; align-items: center; justify-content: center;">
+                                <svg style="width: 24px; height: 24px; color: #9ca3af;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                                </svg>
+                            </div>
+                        @endif
+                    </td>
                     <td>
                         <div style="font-weight: bold;">{{ $item->product->name }}</div>
                         @if($item->product->category && $item->product->category->name)
@@ -246,7 +273,7 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <th colspan="3" style="text-align: right;">Total do Pedido:</th>
+                    <th colspan="4" style="text-align: right;">Total do Pedido:</th>
                     <th class="total" style="text-align: right;">R$ {{ number_format($order->total, 2, ',', '.') }}</th>
                 </tr>
             </tfoot>

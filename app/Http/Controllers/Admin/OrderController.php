@@ -113,9 +113,11 @@ class OrderController extends Controller
         try {
             $request->validate([
                 'status' => 'required|in:pendente,aguardando_pagamento,aprovado,entregue,cancelado',
+                'delivered_at' => 'nullable|date',
             ]);
 
-            $this->orderService->updateOrderStatus($order, $request->status);
+            $deliveredAt = $request->status === 'entregue' ? ($request->delivered_at ?? now()->format('Y-m-d')) : null;
+            $this->orderService->updateOrderStatus($order, $request->status, $deliveredAt);
 
             return redirect()->route('admin.orders.show', $order)
                 ->with('success', 'Status do pedido atualizado com sucesso!');

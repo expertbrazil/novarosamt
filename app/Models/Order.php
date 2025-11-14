@@ -22,11 +22,13 @@ class Order extends Model
         'due_date',
         'payment_method',
         'whatsapp_sent_at',
+        'delivered_at',
     ];
 
     protected $casts = [
         'total' => 'decimal:2',
         'due_date' => 'date',
+        'delivered_at' => 'date',
         'whatsapp_sent_at' => 'datetime',
     ];
 
