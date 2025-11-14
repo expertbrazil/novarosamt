@@ -15,46 +15,58 @@ class ProductController extends Controller
     {
         $query = Product::with('category')->withCount('orderItems');
 
-        if ($request->has('search')) {
-            $query->where('name', 'like', '%' . $request->search . '%');
+        // Filtro de estoque mínimo (tem prioridade)
+        if ($request->filled('low_stock') && $request->low_stock == 1) {
+            $query->where('is_active', true)
+                  ->whereNotNull('min_stock')
+                  ->where('min_stock', '>', 0)
+                  ->whereColumn('stock', '<=', 'min_stock');
         }
 
-        if ($request->has('category_id')) {
-            $query->where('category_id', $request->category_id);
-        }
-
-        // Filtros adicionais
-        if ($request->filled('status')) {
-            if ($request->status === 'active') {
-                $query->where('is_active', true);
-            } elseif ($request->status === 'inactive') {
-                $query->where('is_active', false);
+        // Filtro de status (aplicar apenas se não estiver filtrando por estoque mínimo)
+        if (!($request->filled('low_stock') && $request->low_stock == 1)) {
+            if ($request->filled('status')) {
+                if ($request->status === 'active') {
+                    $query->where('is_active', true);
+                } elseif ($request->status === 'inactive') {
+                    $query->where('is_active', false);
+                }
             }
         }
 
+        // Busca por nome
+        if ($request->filled('search')) {
+            $query->where('name', 'like', '%' . $request->search . '%');
+        }
+
+        // Filtro por categoria
+        if ($request->filled('category_id')) {
+            $query->where('category_id', $request->category_id);
+        }
+
+        // Filtro "com pedidos"
         if ($request->boolean('with_orders')) {
             $query->whereHas('orderItems');
         }
 
-        if ($request->filled('stock_min')) {
-            $query->where('stock', '>=', (int) $request->stock_min);
-        }
-        if ($request->filled('stock_max')) {
-            $query->where('stock', '<=', (int) $request->stock_max);
-        }
-        if ($request->filled('low_stock') && $request->low_stock == 1) {
-            $query->whereRaw('stock <= min_stock')
-                  ->where('stock', '>', 0)
-                  ->where('min_stock', '>', 0);
+        // Filtros de faixa de estoque (não aplicar quando filtrando por estoque mínimo)
+        if (!($request->filled('low_stock') && $request->low_stock == 1)) {
+            if ($request->filled('stock_min')) {
+                $query->where('stock', '>=', (int) $request->stock_min);
+            }
+            if ($request->filled('stock_max')) {
+                $query->where('stock', '<=', (int) $request->stock_max);
+            }
         }
 
         $products = $query->orderBy('created_at', 'desc')->paginate(15)->withQueryString();
         $categories = Category::all();
         
-        // Contar produtos com estoque abaixo do mínimo
-        $lowStockCount = Product::whereRaw('stock <= min_stock')
-                                  ->where('stock', '>', 0)
+        // Contar produtos ATIVOS com estoque abaixo do mínimo
+        $lowStockCount = Product::where('is_active', true)
+                                  ->whereNotNull('min_stock')
                                   ->where('min_stock', '>', 0)
+                                  ->whereColumn('stock', '<=', 'min_stock')
                                   ->count();
         
         // Contar produtos com estoque zerado

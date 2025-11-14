@@ -93,6 +93,9 @@
     <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
         <div class="px-4 py-5 sm:p-6">
             <form method="GET" class="space-y-4">
+                @if(request()->has('low_stock'))
+                    <input type="hidden" name="low_stock" value="{{ request('low_stock') }}">
+                @endif
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     <!-- Search -->
                     <div class="sm:col-span-2">
@@ -176,7 +179,7 @@
                             </svg>
                             Filtrar
                         </button>
-                        @if(request()->hasAny(['search', 'category_id', 'status', 'stock_min', 'stock_max', 'with_orders']))
+                        @if(request()->hasAny(['search', 'category_id', 'status', 'stock_min', 'stock_max', 'with_orders', 'low_stock']))
                             <a href="{{ route('admin.products.index') }}" class="btn-secondary">
                                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
