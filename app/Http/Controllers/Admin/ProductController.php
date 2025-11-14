@@ -286,5 +286,40 @@ class ProductController extends Controller
 
         return response()->stream($callback, 200, $headers);
     }
+
+    public function duplicate(Product $product)
+    {
+        // Criar novo produto com base no original
+        $newProduct = $product->replicate();
+        
+        // Adicionar " (Cópia)" ao nome
+        $newProduct->name = $product->name . ' (Cópia)';
+        
+        // Gerar novo slug
+        $newProduct->slug = Str::slug($newProduct->name);
+        
+        // Garantir que o slug seja único
+        $originalSlug = $newProduct->slug;
+        $counter = 1;
+        while (Product::where('slug', $newProduct->slug)->exists()) {
+            $newProduct->slug = $originalSlug . '-' . $counter;
+            $counter++;
+        }
+        
+        // Zerar estoque e dados de última compra
+        $newProduct->stock = 0;
+        $newProduct->last_purchase_cost = null;
+        $newProduct->last_purchase_at = null;
+        
+        // Não copiar a imagem (deixar sem imagem)
+        $newProduct->image = null;
+        
+        // Salvar o novo produto
+        $newProduct->save();
+        
+        // Redirecionar para a edição do produto duplicado
+        return redirect()->route('admin.products.edit', $newProduct)
+            ->with('success', 'Produto duplicado com sucesso! Você pode editar as informações agora.');
+    }
 }
 

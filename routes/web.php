@@ -31,6 +31,7 @@ Route::middleware(['auth', 'role:admin|gerente|vendedor'])->prefix('admin')->nam
     Route::middleware(['role:admin|gerente'])->group(function () {
         Route::resource('products', ProductController::class);
         Route::post('products/{product}/toggle', [ProductController::class, 'toggle'])->name('products.toggle');
+        Route::get('products/{product}/duplicate', [ProductController::class, 'duplicate'])->name('products.duplicate');
         Route::get('products/export/zero-stock', [ProductController::class, 'exportZeroStock'])->name('products.export.zero-stock');
         Route::get('products/export/low-stock', [ProductController::class, 'exportLowStock'])->name('products.export.low-stock');
         Route::resource('categories', CategoryController::class)->except(['show']);
