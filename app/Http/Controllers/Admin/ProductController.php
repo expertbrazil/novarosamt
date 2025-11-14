@@ -25,7 +25,7 @@ class ProductController extends Controller
 
         // Filtro de status (aplicar apenas se não estiver filtrando por estoque mínimo)
         if (!($request->filled('low_stock') && $request->low_stock == 1)) {
-            if ($request->filled('status')) {
+            if ($request->filled('status') && $request->status != '') {
                 if ($request->status === 'active') {
                     $query->where('is_active', true);
                 } elseif ($request->status === 'inactive') {
@@ -34,14 +34,19 @@ class ProductController extends Controller
             }
         }
 
-        // Busca por nome
+        // Busca por nome ou descrição
         if ($request->filled('search')) {
-            $query->where('name', 'like', '%' . $request->search . '%');
+            $searchTerm = '%' . $request->search . '%';
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('name', 'like', $searchTerm)
+                  ->orWhere('description', 'like', $searchTerm)
+                  ->orWhere('sku', 'like', $searchTerm);
+            });
         }
 
         // Filtro por categoria
-        if ($request->filled('category_id')) {
-            $query->where('category_id', $request->category_id);
+        if ($request->filled('category_id') && $request->category_id != '') {
+            $query->where('category_id', (int) $request->category_id);
         }
 
         // Filtro "com pedidos"
@@ -51,10 +56,10 @@ class ProductController extends Controller
 
         // Filtros de faixa de estoque (não aplicar quando filtrando por estoque mínimo)
         if (!($request->filled('low_stock') && $request->low_stock == 1)) {
-            if ($request->filled('stock_min')) {
+            if ($request->filled('stock_min') && $request->stock_min !== '') {
                 $query->where('stock', '>=', (int) $request->stock_min);
             }
-            if ($request->filled('stock_max')) {
+            if ($request->filled('stock_max') && $request->stock_max !== '') {
                 $query->where('stock', '<=', (int) $request->stock_max);
             }
         }

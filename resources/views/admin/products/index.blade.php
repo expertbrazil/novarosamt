@@ -122,7 +122,7 @@
     <!-- Filters -->
     <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
         <div class="px-4 py-5 sm:p-6">
-            <form method="GET" class="space-y-4">
+            <form method="GET" action="{{ route('admin.products.index') }}" class="space-y-4">
                 @if(request()->has('low_stock'))
                     <input type="hidden" name="low_stock" value="{{ request('low_stock') }}">
                 @endif
@@ -151,7 +151,7 @@
                         <select name="category_id" id="category_id" class="form-input">
                             <option value="">Todas as categorias</option>
                             @foreach($categories as $category)
-                                <option value="{{ $category->id }}" {{ request('category_id') == $category->id ? 'selected' : '' }}>
+                                <option value="{{ $category->id }}" {{ request('category_id') == $category->id || (string)request('category_id') === (string)$category->id ? 'selected' : '' }}>
                                     {{ $category->name }}
                                 </option>
                             @endforeach
