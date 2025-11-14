@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Settings;
+use App\Models\EstadoMunicipio;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -12,7 +13,20 @@ class SettingsController extends Controller
     public function index()
     {
         $settings = Settings::all()->pluck('value', 'key');
-        return view('admin.settings.index', compact('settings'));
+        $estados = EstadoMunicipio::getEstados();
+        
+        // Carregar cidades de entrega selecionadas
+        $deliveryCities = [];
+        $deliveryCitiesJson = Settings::get('delivery_cities', '[]');
+        if ($deliveryCitiesJson) {
+            $decoded = json_decode($deliveryCitiesJson, true) ?? [];
+            // Garantir que seja um array indexado numericamente
+            if (is_array($decoded)) {
+                $deliveryCities = array_values($decoded);
+            }
+        }
+        
+        return view('admin.settings.index', compact('settings', 'estados', 'deliveryCities'));
     }
 
     public function update(Request $request)
@@ -21,6 +35,13 @@ class SettingsController extends Controller
             'logo' => 'nullable|image|mimes:jpg,jpeg,png,svg|max:2048',
             'whatsapp_number' => 'nullable|string|max:20',
             'whatsapp_message' => 'nullable|string|max:500',
+            
+            // Delivery Settings
+            'company_address' => 'nullable|string|max:500',
+            'delivery_info' => 'nullable|string|max:2000',
+            'delivery_cities' => 'nullable|array',
+            'delivery_cities.*.estado' => 'required|string|size:2',
+            'delivery_cities.*.municipio_id' => 'required|exists:estados_municipios,id',
             
             // SMTP Settings
             'smtp_host' => 'nullable|string|max:255',
@@ -53,6 +74,24 @@ class SettingsController extends Controller
             Settings::set('whatsapp_message', $request->whatsapp_message, 'text', 'Mensagem padrão do WhatsApp');
         }
 
+        // Delivery Settings
+        if ($request->filled('company_address')) {
+            Settings::set('company_address', $request->company_address, 'text', 'Endereço da sede da empresa');
+        }
+        
+        if ($request->filled('delivery_info')) {
+            Settings::set('delivery_info', $request->delivery_info, 'text', 'Informações sobre entrega para o cliente');
+        }
+        
+        if ($request->has('delivery_cities')) {
+            $deliveryCities = $request->input('delivery_cities', []);
+            // Filtrar apenas os que têm municipio_id válido
+            $validCities = array_filter($deliveryCities, function($city) {
+                return !empty($city['municipio_id']);
+            });
+            Settings::set('delivery_cities', json_encode(array_values($validCities)), 'json', 'Cidades onde é feita a entrega');
+        }
+
         // SMTP Settings
         $smtpFields = [
             'smtp_host' => 'Host do servidor SMTP',
@@ -73,5 +112,22 @@ class SettingsController extends Controller
 
         return redirect()->route('admin.settings.index')
             ->with('success', 'Parâmetros atualizados com sucesso!');
+    }
+
+    /**
+     * Retorna municípios de um estado via AJAX
+     */
+    public function getMunicipios($estado)
+    {
+        $municipios = EstadoMunicipio::getByEstado($estado);
+        
+        return response()->json(
+            $municipios->map(function($municipio) {
+                return [
+                    'id' => $municipio->id,
+                    'municipio' => $municipio->municipio,
+                ];
+            })
+        );
     }
 }

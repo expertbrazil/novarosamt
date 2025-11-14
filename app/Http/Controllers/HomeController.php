@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\Settings;
+use App\Models\EstadoMunicipio;
 use Illuminate\Http\Request;
 
 class HomeController extends Controller
@@ -17,7 +19,27 @@ class HomeController extends Controller
             }])
             ->get();
 
-        return view('home.index', compact('categories'));
+        // Buscar dados de entrega
+        $companyAddress = Settings::get('company_address', '');
+        $deliveryInfo = Settings::get('delivery_info', '');
+        
+        // Buscar cidades de entrega
+        $deliveryCities = [];
+        $deliveryCitiesJson = Settings::get('delivery_cities', '[]');
+        if ($deliveryCitiesJson) {
+            $decoded = json_decode($deliveryCitiesJson, true) ?? [];
+            if (is_array($decoded)) {
+                foreach ($decoded as $cityData) {
+                    $municipioId = $cityData['municipio_id'] ?? $cityData;
+                    $municipio = EstadoMunicipio::find($municipioId);
+                    if ($municipio) {
+                        $deliveryCities[] = $municipio;
+                    }
+                }
+            }
+        }
+
+        return view('home.index', compact('categories', 'companyAddress', 'deliveryInfo', 'deliveryCities'));
     }
 
     public function category(string $slug)

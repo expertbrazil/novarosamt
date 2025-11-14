@@ -120,5 +120,8 @@ class DatabaseSeeder extends Seeder
         Settings::set('smtp_encryption', '', 'string', 'Criptografia SMTP');
         Settings::set('smtp_from_address', '', 'string', 'Email remetente');
         Settings::set('smtp_from_name', 'Nova Rosa MT', 'string', 'Nome remetente');
+        
+        // Estados e Municípios - descomente a linha abaixo para popular
+        // $this->call(EstadosMunicipiosSeeder::class);
     }
 }

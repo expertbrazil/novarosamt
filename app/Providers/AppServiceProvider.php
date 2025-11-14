@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\Settings;
+use App\Models\EstadoMunicipio;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
@@ -32,7 +33,25 @@ class AppServiceProvider extends ServiceProvider
         
         // Share settings with all views
         View::composer('*', function ($view) {
-            $view->with('settings', Settings::getAll());
+            $settings = Settings::getAll();
+            $view->with('settings', $settings);
+            
+            // Buscar cidades de entrega para o footer
+            $deliveryCities = collect([]);
+            $deliveryCitiesJson = Settings::get('delivery_cities', '[]');
+            if ($deliveryCitiesJson) {
+                $decoded = json_decode($deliveryCitiesJson, true) ?? [];
+                if (is_array($decoded)) {
+                    foreach ($decoded as $cityData) {
+                        $municipioId = $cityData['municipio_id'] ?? $cityData;
+                        $municipio = EstadoMunicipio::find($municipioId);
+                        if ($municipio) {
+                            $deliveryCities->push($municipio);
+                        }
+                    }
+                }
+            }
+            $view->with('footerDeliveryCities', $deliveryCities);
         });
     }
 }

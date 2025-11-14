@@ -11,7 +11,7 @@
             </h1>
             <p class="text-xl text-indigo-100 mb-8 max-w-3xl mx-auto">
                 Encontre os melhores produtos de limpeza para sua casa ou empresa. 
-                Qualidade garantida e entrega rápida em Nova Rosa, MT.
+                Qualidade garantida e entrega rápida{{ $companyAddress ? ' em ' . $companyAddress : '' }}.
             </p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
                 <a href="{{ route('order.create') }}" 
@@ -59,7 +59,7 @@
                     </svg>
                 </div>
                 <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Entrega Rápida</h3>
-                <p class="text-gray-600 dark:text-gray-300">Receba seus produtos rapidamente em Nova Rosa e região</p>
+                <p class="text-gray-600 dark:text-gray-300">Receba seus produtos rapidamente{{ $companyAddress ? ' em ' . $companyAddress : ' em nossa região' }}</p>
             </div>
             
             <div class="text-center">
@@ -172,6 +172,59 @@
         @endif
     </div>
 </div>
+
+<!-- Entrega Section -->
+@if($companyAddress || count($deliveryCities) > 0)
+<div class="py-16 bg-white dark:bg-gray-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-4">Entrega Rápida</h2>
+            <p class="text-lg text-gray-600 dark:text-gray-300">
+                Receba seus produtos rapidamente{{ $companyAddress ? ' em ' . $companyAddress : '' }}
+            </p>
+        </div>
+
+        @if($companyAddress)
+        <div class="mb-8 text-center">
+            <div class="inline-flex items-center justify-center p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg">
+                <svg class="w-6 h-6 text-indigo-600 dark:text-indigo-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                <span class="text-gray-900 dark:text-white font-medium">{{ $companyAddress }}</span>
+            </div>
+        </div>
+        @endif
+
+        @if(count($deliveryCities) > 0)
+        <div class="mb-8">
+            <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4 text-center">
+                Cidades Atendidas
+            </h3>
+            <div class="flex flex-wrap justify-center gap-3">
+                @foreach($deliveryCities as $city)
+                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 text-center min-w-[150px]">
+                    <p class="text-sm font-medium text-gray-900 dark:text-white">{{ $city->municipio }}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ $city->estado }}</p>
+                </div>
+                @endforeach
+            </div>
+        </div>
+        @endif
+
+        @if($deliveryInfo)
+        <div class="mt-8 p-6 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg">
+            <div class="flex items-start">
+                <svg class="w-6 h-6 text-indigo-600 dark:text-indigo-400 mr-3 mt-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <div class="text-gray-700 dark:text-gray-300 whitespace-pre-line">{{ $deliveryInfo }}</div>
+            </div>
+        </div>
+        @endif
+    </div>
+</div>
+@endif
 
 <!-- CTA Section -->
 <div class="bg-indigo-600 dark:bg-indigo-800">

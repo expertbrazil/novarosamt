@@ -65,5 +65,6 @@ Route::middleware(['auth', 'role:admin|gerente|vendedor'])->prefix('admin')->nam
         // Parâmetros do Sistema
         Route::get('settings', [SettingsController::class, 'index'])->name('settings.index');
         Route::put('settings', [SettingsController::class, 'update'])->name('settings.update');
+        Route::get('settings/municipios/{estado}', [SettingsController::class, 'getMunicipios'])->name('settings.municipios');
     });
 });
