@@ -8,6 +8,23 @@
 @endphp
 
 @section('content')
+<style>
+    /* Garantir que links sejam clicáveis no mobile */
+    @media (max-width: 768px) {
+        .stock-movement-card {
+            position: relative;
+            z-index: 1;
+            cursor: pointer;
+            -webkit-tap-highlight-color: rgba(79, 70, 229, 0.3);
+            touch-action: manipulation;
+            min-height: 44px; /* Área mínima de toque recomendada */
+        }
+        .stock-movement-card:active {
+            opacity: 0.8;
+            transform: scale(0.98);
+        }
+    }
+</style>
 <div class="space-y-6">
     <!-- Header -->
     <div class="sm:flex sm:items-center sm:justify-between">
@@ -280,7 +297,142 @@
     <!-- Movements Table -->
     <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
         @if($movements->count() > 0)
-            <div class="overflow-x-auto">
+            <!-- Mobile View -->
+            <div class="block md:hidden">
+                @foreach($movements as $movement)
+                    @php 
+                        $labels = [
+                            'in' => 'Entrada', 
+                            'out' => 'Saída', 
+                            'adjustment_in' => 'Ajuste Entrada', 
+                            'adjustment_out' => 'Ajuste Saída'
+                        ];
+                        $badgeClasses = match($movement->type) {
+                            'in' => 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+                            'out' => 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+                            'adjustment_in' => 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+                            'adjustment_out' => 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+                            default => 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                        };
+                        $balance = $balanceMap[$movement->id] ?? 0;
+                        $currentStock = $movement->product->stock ?? 0;
+                        $isLowStock = $movement->product && $movement->product->min_stock && $currentStock <= $movement->product->min_stock;
+                    @endphp
+                    @if($movement->product)
+                    <a href="{{ route('admin.products.show', $movement->product) }}" 
+                       class="stock-movement-card block border-b border-gray-200 dark:border-gray-700 p-4 hover:bg-gray-50 dark:hover:bg-gray-700 active:bg-gray-100 dark:active:bg-gray-600 transition-colors"
+                       style="touch-action: manipulation; -webkit-tap-highlight-color: rgba(79, 70, 229, 0.3); display: block; position: relative; z-index: 1;">
+                        <div class="flex items-start justify-between mb-3">
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center mb-2">
+                                    <div class="h-10 w-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mr-3 flex-shrink-0">
+                                        <svg class="h-5 w-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                                        </svg>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                                            {{ $movement->product->name }}
+                                        </p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                                            SKU: {{ $movement->product->sku ?? 'N/A' }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $badgeClasses }} ml-2 flex-shrink-0">
+                                {{ $labels[$movement->type] ?? $movement->type }}
+                            </span>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-3 text-sm">
+                            <div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Data/Hora</p>
+                                <p class="font-medium text-gray-900 dark:text-white">
+                                    {{ $movement->moved_at?->format('d/m/Y') }}
+                                </p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">
+                                    {{ $movement->moved_at?->format('H:i') }}
+                                </p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Quantidade</p>
+                                <p class="font-medium text-gray-900 dark:text-white">
+                                    {{ number_format($movement->quantity, 0, ',', '.') }} un
+                                </p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Estoque Atual</p>
+                                <p class="font-medium {{ $isLowStock ? 'text-yellow-600 dark:text-yellow-400' : ($currentStock <= 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white') }}">
+                                    {{ number_format($currentStock, 0, ',', '.') }}
+                                </p>
+                            </div>
+                            @if($movement->unit_cost !== null)
+                            <div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Custo Unit.</p>
+                                <p class="font-medium text-gray-900 dark:text-white">
+                                    R$ {{ number_format($movement->unit_cost, 2, ',', '.') }}
+                                </p>
+                            </div>
+                            @endif
+                        </div>
+                        
+                        @if($movement->reason)
+                        <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Motivo</p>
+                            <p class="text-sm text-gray-900 dark:text-white">{{ $movement->reason }}</p>
+                        </div>
+                        @endif
+                    </a>
+                    @else
+                    <div class="border-b border-gray-200 dark:border-gray-700 p-4">
+                        <div class="flex items-start justify-between mb-3">
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center mb-2">
+                                    <div class="h-10 w-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mr-3 flex-shrink-0">
+                                        <svg class="h-5 w-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                                        </svg>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                                            Produto removido
+                                        </p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                                            SKU: N/A
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $badgeClasses }} ml-2 flex-shrink-0">
+                                {{ $labels[$movement->type] ?? $movement->type }}
+                            </span>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-3 text-sm">
+                            <div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Data/Hora</p>
+                                <p class="font-medium text-gray-900 dark:text-white">
+                                    {{ $movement->moved_at?->format('d/m/Y') }}
+                                </p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">
+                                    {{ $movement->moved_at?->format('H:i') }}
+                                </p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Quantidade</p>
+                                <p class="font-medium text-gray-900 dark:text-white">
+                                    {{ number_format($movement->quantity, 0, ',', '.') }} un
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    @endif
+                @endforeach
+            </div>
+            
+            <!-- Desktop View -->
+            <div class="hidden md:block overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead class="bg-gray-50 dark:bg-gray-700">
                         <tr>
@@ -333,6 +485,26 @@
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
+                                    @if($movement->product)
+                                    <a href="{{ route('admin.products.show', $movement->product) }}" 
+                                       class="flex items-center hover:opacity-80 transition-opacity cursor-pointer group">
+                                        <div class="flex-shrink-0 h-8 w-8">
+                                            <div class="h-8 w-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900 transition-colors">
+                                                <svg class="h-4 w-4 text-gray-600 dark:text-gray-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                                                </svg>
+                                            </div>
+                                        </div>
+                                        <div class="ml-3">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                                                {{ $movement->product->name }}
+                                            </div>
+                                            <div class="text-sm text-gray-500 dark:text-gray-400">
+                                                SKU: {{ $movement->product->sku ?? 'N/A' }}
+                                            </div>
+                                        </div>
+                                    </a>
+                                    @else
                                     <div class="flex items-center">
                                         <div class="flex-shrink-0 h-8 w-8">
                                             <div class="h-8 w-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
@@ -343,13 +515,14 @@
                                         </div>
                                         <div class="ml-3">
                                             <div class="text-sm font-medium text-gray-900 dark:text-white">
-                                                {{ $movement->product?->name }}
+                                                Produto removido
                                             </div>
                                             <div class="text-sm text-gray-500 dark:text-gray-400">
-                                                SKU: {{ $movement->product?->sku ?? 'N/A' }}
+                                                SKU: N/A
                                             </div>
                                         </div>
                                     </div>
+                                    @endif
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     @php 

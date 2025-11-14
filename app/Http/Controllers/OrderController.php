@@ -32,7 +32,9 @@ class OrderController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('orders.create', compact('categories', 'allProducts'));
+        $useMobileLayout = request()->attributes->get('useMobileLayout', false);
+        $viewPath = $useMobileLayout ? 'mobile.orders.create' : 'orders.create';
+        return view($viewPath, compact('categories', 'allProducts'));
     }
 
     public function findCustomerByCpf(Request $request)

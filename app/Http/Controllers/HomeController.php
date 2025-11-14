@@ -39,7 +39,9 @@ class HomeController extends Controller
             }
         }
 
-        return view('home.index', compact('categories', 'companyAddress', 'deliveryInfo', 'deliveryCities'));
+        $useMobileLayout = request()->attributes->get('useMobileLayout', false);
+        $viewPath = $useMobileLayout ? 'mobile.home.index' : 'home.index';
+        return view($viewPath, compact('categories', 'companyAddress', 'deliveryInfo', 'deliveryCities'));
     }
 
     public function category(string $slug)
@@ -55,6 +57,19 @@ class HomeController extends Controller
             ->paginate(12);
 
         return view('products.category', compact('category', 'products'));
+    }
+
+    public function showProduct($id)
+    {
+        $product = Product::where('id', $id)
+            ->where('is_active', true)
+            ->with('category')
+            ->firstOrFail();
+
+        $useMobileLayout = request()->attributes->get('useMobileLayout', false);
+        $viewPath = $useMobileLayout ? 'mobile.products.show' : 'products.show';
+        
+        return view($viewPath, compact('product'));
     }
 }
 

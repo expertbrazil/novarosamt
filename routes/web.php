@@ -10,10 +10,15 @@ use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\SettingsController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\StockMovementController;
+use App\Http\Controllers\ManifestController;
+
+// PWA Manifest
+Route::get('/manifest.json', [ManifestController::class, 'index'])->name('manifest.json');
 
 // Rotas públicas
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/categoria/{slug}', [HomeController::class, 'category'])->name('category.show');
+Route::get('/produto/{id}', [HomeController::class, 'showProduct'])->name('product.show');
 Route::get('/pedido', [OrderController::class, 'create'])->name('order.create');
 Route::post('/pedido', [OrderController::class, 'store'])->name('order.store');
 Route::get('/pedido/sucesso/{id}', [OrderController::class, 'success'])->name('order.success');
