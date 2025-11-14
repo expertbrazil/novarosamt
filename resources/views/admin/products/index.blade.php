@@ -341,9 +341,15 @@
                                 </div>
                                 
                                 <div class="flex items-center gap-2 mb-2">
+                                    @if($product->category)
                                     <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200">
                                         {{ $product->category->name }}
                                     </span>
+                                    @else
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
+                                        Sem categoria
+                                    </span>
+                                    @endif
                                     @if($product->unit)
                                     <span class="text-xs text-gray-500 dark:text-gray-400">
                                         {{ $product->unit_value }} {{ $product->unit }}
@@ -448,9 +454,15 @@
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
+                                    @if($product->category)
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200">
                                         {{ $product->category->name }}
                                     </span>
+                                    @else
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
+                                        Sem categoria
+                                    </span>
+                                    @endif
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm text-gray-900 dark:text-white">
