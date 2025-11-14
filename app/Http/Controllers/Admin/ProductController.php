@@ -234,9 +234,11 @@ class ProductController extends Controller
 
     public function exportLowStock()
     {
+        // Filtrar produtos com estoque abaixo ou igual ao mínimo
+        // Apenas produtos ativos e com estoque mínimo configurado
         $products = Product::with('category')
+            ->where('is_active', true)
             ->whereRaw('stock <= min_stock')
-            ->where('stock', '>', 0)
             ->where('min_stock', '>', 0)
             ->orderBy('category_id')
             ->orderBy('name')
@@ -255,29 +257,57 @@ class ProductController extends Controller
             // Adicionar BOM para UTF-8 (para abrir corretamente no Excel)
             fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
             
-            // Cabeçalho
+            // Cabeçalho otimizado para envio ao fornecedor
             fputcsv($file, [
                 'Código',
-                'Nome',
+                'Nome do Produto',
                 'Categoria',
-                'Descrição',
-                'Preço',
-                'Estoque Atual',
-                'Estoque Mínimo',
                 'Unidade',
+                'Quantidade Atual',
+                'Estoque Mínimo',
+                'Quantidade Necessária',
+                'Último Preço de Compra',
+                'Data Última Compra',
+                'Observações',
             ], ';');
 
             // Dados
             foreach ($products as $product) {
+                // Calcular quantidade necessária (estoque mínimo - estoque atual)
+                // Se o estoque estiver zerado, usar o mínimo como quantidade necessária
+                $quantidadeNecessaria = max($product->min_stock - $product->stock, $product->min_stock);
+                
+                // Formatar unidade e valor unitário
+                $unidade = '';
+                if ($product->unit && $product->unit_value) {
+                    $unidade = $product->unit_value . ' ' . $product->unit;
+                } elseif ($product->unit) {
+                    $unidade = $product->unit;
+                }
+                
+                // Formatar último preço de compra
+                $ultimoPreco = '';
+                if ($product->last_purchase_cost !== null) {
+                    $ultimoPreco = 'R$ ' . number_format($product->last_purchase_cost, 2, ',', '.');
+                }
+                
+                // Formatar data da última compra
+                $dataUltimaCompra = '';
+                if ($product->last_purchase_at) {
+                    $dataUltimaCompra = $product->last_purchase_at->format('d/m/Y');
+                }
+                
                 fputcsv($file, [
                     $product->id,
                     $product->name,
                     $product->category->name ?? 'Sem categoria',
-                    $product->description ?? '',
-                    'R$ ' . number_format($product->price, 2, ',', '.'),
+                    $unidade,
                     $product->stock,
                     $product->min_stock,
-                    $product->unit ?? '',
+                    $quantidadeNecessaria,
+                    $ultimoPreco,
+                    $dataUltimaCompra,
+                    $product->description ?? '',
                 ], ';');
             }
 
