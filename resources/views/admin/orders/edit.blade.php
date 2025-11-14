@@ -203,7 +203,7 @@
                                         <optgroup label="{{ $category->name }}">
                                             @foreach($category->products as $product)
                                                 <option value="{{ $product->id }}" 
-                                                        data-price="{{ $product->last_purchase_cost ?? ($product->sale_price ?? $product->price) }}" 
+                                                        data-price="{{ $product->sale_price ?? $product->price }}" 
                                                         data-stock="{{ $product->stock }}">
                                                     {{ $product->name }} (Estoque: {{ $product->stock }})
                                                 </option>

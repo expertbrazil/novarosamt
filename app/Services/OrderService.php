@@ -94,7 +94,7 @@ class OrderService
                 // Não verificar estoque na criação - será verificado apenas quando status for "entregue"
                 // A validação de estoque será feita no momento da entrega
 
-                $unitPrice = $product->last_purchase_cost ?? ($product->sale_price ?? $product->price);
+                $unitPrice = $product->sale_price ?? $product->price;
                 $subtotal = $unitPrice * $itemData['quantity'];
                 $total += $subtotal;
 

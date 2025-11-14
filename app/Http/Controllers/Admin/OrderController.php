@@ -203,7 +203,7 @@ class OrderController extends Controller
 
             foreach ($request->items as $itemData) {
                 $product = Product::findOrFail($itemData['product_id']);
-                $unitPrice = $product->last_purchase_cost ?? ($product->sale_price ?? $product->price);
+                $unitPrice = $product->sale_price ?? $product->price;
                 $subtotal = $unitPrice * $itemData['quantity'];
                 $total += $subtotal;
 
