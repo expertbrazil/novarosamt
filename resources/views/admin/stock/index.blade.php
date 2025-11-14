@@ -432,7 +432,20 @@
             </div>
             
             <!-- Desktop View -->
-            <div class="hidden md:block overflow-x-auto">
+            <div class="overflow-x-auto">
+                <style>
+                    @media (min-width: 768px) {
+                        .stock-desktop-table {
+                            display: block !important;
+                        }
+                    }
+                    @media (max-width: 767px) {
+                        .stock-desktop-table {
+                            display: none !important;
+                        }
+                    }
+                </style>
+                <div class="stock-desktop-table">
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead class="bg-gray-50 dark:bg-gray-700">
                         <tr>
@@ -610,6 +623,7 @@
                         @endforeach
                     </tbody>
                 </table>
+                </div>
             </div>
         @else
             <div class="text-center py-12">
