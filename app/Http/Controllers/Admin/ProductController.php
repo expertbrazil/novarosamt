@@ -234,12 +234,13 @@ class ProductController extends Controller
 
     public function exportLowStock()
     {
-        // Filtrar produtos com estoque abaixo ou igual ao mínimo
-        // Apenas produtos ativos e com estoque mínimo configurado
+        // Filtrar produtos ATIVOS com estoque abaixo ou igual ao mínimo configurado
+        // Apenas produtos com status ATIVO (is_active = true)
         $products = Product::with('category')
             ->where('is_active', true)
-            ->whereRaw('stock <= min_stock')
+            ->whereNotNull('min_stock')
             ->where('min_stock', '>', 0)
+            ->whereColumn('stock', '<=', 'min_stock')
             ->orderBy('category_id')
             ->orderBy('name')
             ->get();
