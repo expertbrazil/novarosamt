@@ -98,8 +98,14 @@ class OrderController extends Controller
 
     public function show(Order $order)
     {
-        $order->load('items.product');
+        $order->load('items.product.category');
         return view('admin.orders.show', compact('order'));
+    }
+
+    public function pdf(Order $order)
+    {
+        $order->load('items.product.category');
+        return view('admin.orders.pdf', compact('order'));
     }
 
     public function updateStatus(Request $request, Order $order)

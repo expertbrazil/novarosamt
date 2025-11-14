@@ -46,6 +46,7 @@ Route::middleware(['auth', 'role:admin|gerente|vendedor'])->prefix('admin')->nam
         Route::get('orders/create', [AdminOrderController::class, 'create'])->name('orders.create');
         Route::post('orders', [AdminOrderController::class, 'store'])->name('orders.store');
         Route::get('orders/{order}', [AdminOrderController::class, 'show'])->name('orders.show');
+        Route::get('orders/{order}/pdf', [AdminOrderController::class, 'pdf'])->name('orders.pdf');
         Route::get('orders/{order}/edit', [AdminOrderController::class, 'edit'])->name('orders.edit');
         Route::put('orders/{order}', [AdminOrderController::class, 'update'])->name('orders.update');
         Route::delete('orders/{order}', [AdminOrderController::class, 'destroy'])->name('orders.destroy');

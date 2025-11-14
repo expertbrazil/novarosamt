@@ -5,11 +5,38 @@
 @endphp
 
 @section('content')
+<style>
+    @media print {
+        .no-print {
+            display: none !important;
+        }
+        body {
+            background: white !important;
+        }
+        .bg-white, .bg-gray-800, .bg-gray-50, .bg-gray-700 {
+            background: white !important;
+        }
+        .text-gray-900, .text-white, .text-gray-500, .text-gray-400 {
+            color: #000 !important;
+        }
+        .shadow, .rounded-lg {
+            box-shadow: none !important;
+            border-radius: 0 !important;
+        }
+        .border, .border-gray-200, .border-gray-700 {
+            border: 1px solid #e5e7eb !important;
+        }
+        a {
+            color: #000 !important;
+            text-decoration: none !important;
+        }
+    }
+</style>
 <div class="space-y-6">
     <!-- Header -->
     <div class="md:flex md:items-center md:justify-between">
         <div class="min-w-0 flex-1">
-            <nav class="flex" aria-label="Breadcrumb">
+            <nav class="flex no-print" aria-label="Breadcrumb">
                 <ol role="list" class="flex items-center space-x-4">
                     <li>
                         <div class="flex">
@@ -35,7 +62,7 @@
                 Criado em {{ $order->created_at->format('d/m/Y \à\s H:i') }}
             </p>
         </div>
-        <div class="mt-4 flex space-x-3 md:ml-4 md:mt-0">
+        <div class="mt-4 flex flex-wrap items-center gap-3 md:ml-4 md:mt-0">
             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $order->status_badge }}">
                 <svg class="w-1.5 h-1.5 mr-1.5" fill="currentColor" viewBox="0 0 8 8">
                     <circle cx="4" cy="4" r="3"/>
@@ -45,6 +72,26 @@
             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
                 {{ $order->items->count() }} {{ Str::plural('item', $order->items->count()) }}
             </span>
+            
+            <!-- Botões de Exportar e Imprimir -->
+            <div class="flex items-center gap-2 no-print">
+                <a href="{{ route('admin.orders.pdf', $order) }}" 
+                   target="_blank"
+                   class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                    </svg>
+                    Exportar PDF
+                </a>
+                <button type="button" 
+                        onclick="window.print()"
+                        class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                    </svg>
+                    Imprimir
+                </button>
+            </div>
         </div>
     </div>
 
@@ -215,7 +262,7 @@
         </div>
 
         <!-- Sidebar -->
-        <div class="space-y-6">
+        <div class="space-y-6 no-print">
             <!-- Status Management -->
             <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
                 <div class="px-4 py-5 sm:p-6">
