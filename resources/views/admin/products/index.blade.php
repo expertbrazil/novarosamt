@@ -281,12 +281,9 @@
     @if($products->count() > 0)
         <div class="block md:hidden space-y-3">
             @foreach($products as $product)
-                <div class="product-card-mobile bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden active:scale-[0.98] transition-transform"
-                     data-product-id="{{ $product->id }}"
-                     data-product-name="{{ $product->name }}"
-                     data-product-orders="{{ $product->order_items_count ?? 0 }}"
-                     onclick="openProductActions(this)"
-                     style="touch-action: manipulation; -webkit-tap-highlight-color: rgba(79, 70, 229, 0.2); cursor: pointer;">
+                <a href="{{ route('admin.products.show', $product) }}" 
+                   class="product-card-mobile bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden block"
+                   style="touch-action: manipulation; -webkit-tap-highlight-color: rgba(79, 70, 229, 0.3); text-decoration: none;">
                     <div class="p-4">
                         <div class="flex items-start gap-4">
                             <!-- Image -->
@@ -317,17 +314,30 @@
                                         </p>
                                         @endif
                                     </div>
-                                    <form action="{{ route('admin.products.toggle', $product) }}" method="POST" class="flex-shrink-0" onclick="event.stopPropagation(); event.preventDefault();">
-                                        @csrf
-                                        <button type="submit" 
-                                                class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium transition-colors {{ $product->is_active ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300' }}"
-                                                onclick="event.stopPropagation();">
-                                            <svg class="w-2 h-2 mr-1 {{ $product->is_active ? 'text-green-400' : 'text-gray-400' }}" fill="currentColor" viewBox="0 0 8 8">
-                                                <circle cx="4" cy="4" r="3"/>
-                                            </svg>
-                                            {{ $product->is_active ? 'Ativo' : 'Inativo' }}
-                                        </button>
-                                    </form>
+                                    <div class="flex-shrink-0 flex items-center gap-2">
+                                        <form action="{{ route('admin.products.toggle', $product) }}" method="POST" onclick="event.stopPropagation();">
+                                            @csrf
+                                            <button type="submit" 
+                                                    class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium transition-colors {{ $product->is_active ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300' }}"
+                                                    onclick="event.stopPropagation();">
+                                                <svg class="w-2 h-2 mr-1 {{ $product->is_active ? 'text-green-400' : 'text-gray-400' }}" fill="currentColor" viewBox="0 0 8 8">
+                                                    <circle cx="4" cy="4" r="3"/>
+                                                </svg>
+                                                {{ $product->is_active ? 'Ativo' : 'Inativo' }}
+                                            </button>
+                                        </form>
+                                        
+                                        <!-- Menu de ações -->
+                                        <div class="relative" onclick="event.stopPropagation(); event.preventDefault();">
+                                            <button type="button" 
+                                                    onclick="event.stopPropagation(); event.preventDefault(); openProductMenu(event, {{ $product->id }}, {{ $product->order_items_count ?? 0 }})"
+                                                    class="p-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                                 
                                 <div class="flex items-center gap-2 mb-2">
@@ -361,7 +371,7 @@
                             </div>
                         </div>
                     </div>
-                </div>
+                </a>
             @endforeach
         </div>
     @endif
@@ -666,8 +676,11 @@
 </div>
 
 <script>
-// Função global para abrir ações do produto
-function openProductActions(card) {
+// Função para abrir menu de ações do produto
+function openProductMenu(event, productId, productOrders) {
+    event.stopPropagation();
+    event.preventDefault();
+    
     const actionSheet = document.getElementById('mobileActionSheet');
     const backdrop = document.getElementById('actionSheetBackdrop');
     
@@ -676,12 +689,7 @@ function openProductActions(card) {
         return;
     }
     
-    // Obter dados do card
-    const productId = card.dataset.productId;
-    const productName = card.dataset.productName;
-    const productOrders = parseInt(card.dataset.productOrders || 0);
-    
-    console.log('Abrindo ações para produto:', productId, productName, 'Pedidos:', productOrders);
+    productOrders = parseInt(productOrders || 0);
     
     // Atualizar links
     const viewLink = document.getElementById('actionView');
@@ -690,15 +698,79 @@ function openProductActions(card) {
     const deleteForm = document.getElementById('actionDelete');
     const toggleForm = document.getElementById('actionToggle');
     
-    if (viewLink) viewLink.href = '{{ route("admin.products.show", ":id") }}'.replace(':id', productId);
-    if (editLink) editLink.href = '{{ route("admin.products.edit", ":id") }}'.replace(':id', productId);
-    if (duplicateLink) duplicateLink.href = '{{ route("admin.products.duplicate", ":id") }}'.replace(':id', productId);
+    const baseUrl = window.location.origin;
+    if (viewLink) viewLink.href = baseUrl + '/admin/products/' + productId;
+    if (editLink) editLink.href = baseUrl + '/admin/products/' + productId + '/edit';
+    if (duplicateLink) duplicateLink.href = baseUrl + '/admin/products/' + productId + '/duplicate';
     
     if (deleteForm) {
-        deleteForm.action = '{{ route("admin.products.destroy", ":id") }}'.replace(':id', productId);
+        deleteForm.action = baseUrl + '/admin/products/' + productId;
     }
     if (toggleForm) {
-        toggleForm.action = '{{ route("admin.products.toggle", ":id") }}'.replace(':id', productId);
+        toggleForm.action = baseUrl + '/admin/products/' + productId + '/toggle';
+    }
+    
+    // Mostrar/esconder opções baseado em pedidos
+    if (productOrders > 0) {
+        if (deleteForm) deleteForm.style.display = 'none';
+        if (toggleForm) toggleForm.style.display = 'flex';
+    } else {
+        if (deleteForm) deleteForm.style.display = 'flex';
+        if (toggleForm) toggleForm.style.display = 'none';
+    }
+    
+    // Atualizar título
+    const titleEl = document.getElementById('actionSheetTitle');
+    if (titleEl) {
+        const productCard = event.target.closest('.product-card-mobile');
+        if (productCard) {
+            const productName = productCard.querySelector('h3')?.textContent || 'Produto';
+            titleEl.textContent = productName;
+        }
+    }
+    
+    // Mostrar action sheet
+    backdrop.classList.remove('hidden');
+    actionSheet.classList.remove('hidden');
+    
+    // Forçar reflow e animar
+    setTimeout(() => {
+        actionSheet.classList.remove('translate-y-full');
+    }, 50);
+    
+    // Prevenir scroll
+    document.body.style.overflow = 'hidden';
+}
+
+// Função global para abrir ações do produto (mantida para compatibilidade)
+function openProductActions(productId, productName, productOrders) {
+    const actionSheet = document.getElementById('mobileActionSheet');
+    const backdrop = document.getElementById('actionSheetBackdrop');
+    
+    if (!actionSheet || !backdrop) {
+        alert('Erro: Action sheet não encontrado!');
+        return;
+    }
+    
+    productOrders = parseInt(productOrders || 0);
+    
+    // Atualizar links
+    const viewLink = document.getElementById('actionView');
+    const editLink = document.getElementById('actionEdit');
+    const duplicateLink = document.getElementById('actionDuplicate');
+    const deleteForm = document.getElementById('actionDelete');
+    const toggleForm = document.getElementById('actionToggle');
+    
+    const baseUrl = window.location.origin;
+    if (viewLink) viewLink.href = baseUrl + '/admin/products/' + productId;
+    if (editLink) editLink.href = baseUrl + '/admin/products/' + productId + '/edit';
+    if (duplicateLink) duplicateLink.href = baseUrl + '/admin/products/' + productId + '/duplicate';
+    
+    if (deleteForm) {
+        deleteForm.action = baseUrl + '/admin/products/' + productId;
+    }
+    if (toggleForm) {
+        toggleForm.action = baseUrl + '/admin/products/' + productId + '/toggle';
     }
     
     // Mostrar/esconder opções baseado em pedidos
@@ -718,13 +790,10 @@ function openProductActions(card) {
     backdrop.classList.remove('hidden');
     actionSheet.classList.remove('hidden');
     
-    // Forçar reflow
-    void actionSheet.offsetHeight;
-    
-    // Animar entrada
+    // Forçar reflow e animar
     setTimeout(() => {
         actionSheet.classList.remove('translate-y-full');
-    }, 10);
+    }, 50);
     
     // Prevenir scroll
     document.body.style.overflow = 'hidden';
@@ -747,72 +816,84 @@ function closeActionSheet() {
 }
 
 // Tornar funções globais
+window.openProductMenu = openProductMenu;
 window.openProductActions = openProductActions;
 window.closeActionSheet = closeActionSheet;
 
-document.addEventListener('DOMContentLoaded', function() {
-    const actionSheet = document.getElementById('mobileActionSheet');
-    const backdrop = document.getElementById('actionSheetBackdrop');
-    const closeBtn = document.getElementById('closeActionSheet');
+// Inicializar quando DOM estiver pronto
+(function() {
+    'use strict';
     
-    if (!actionSheet || !backdrop || !closeBtn) {
-        console.error('Elementos do action sheet não encontrados!');
-        return;
-    }
-    
-    // Fechar action sheet
-    closeBtn.addEventListener('click', closeActionSheet);
-    backdrop.addEventListener('click', closeActionSheet);
-    
-    // Fechar com ESC
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && !actionSheet.classList.contains('hidden')) {
-            closeActionSheet();
+    function init() {
+        const actionSheet = document.getElementById('mobileActionSheet');
+        const backdrop = document.getElementById('actionSheetBackdrop');
+        const closeBtn = document.getElementById('closeActionSheet');
+        
+        if (!actionSheet || !backdrop || !closeBtn) {
+            console.warn('Elementos do action sheet não encontrados');
+            return;
         }
-    });
-    
-    // Confirmar exclusão
-    const deleteForm = document.getElementById('actionDelete');
-    if (deleteForm) {
-        deleteForm.addEventListener('submit', function(e) {
-            if (!confirm('Tem certeza que deseja excluir este produto? Esta ação não pode ser desfeita.')) {
-                e.preventDefault();
-                return false;
+        
+        // Fechar action sheet
+        closeBtn.addEventListener('click', closeActionSheet);
+        backdrop.addEventListener('click', closeActionSheet);
+        
+        // Fechar com ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && !actionSheet.classList.contains('hidden')) {
+                closeActionSheet();
             }
-            closeActionSheet();
         });
+        
+        // Confirmar exclusão
+        const deleteForm = document.getElementById('actionDelete');
+        if (deleteForm) {
+            deleteForm.addEventListener('submit', function(e) {
+                if (!confirm('Tem certeza que deseja excluir este produto? Esta ação não pode ser desfeita.')) {
+                    e.preventDefault();
+                    return false;
+                }
+                closeActionSheet();
+            });
+        }
+        
+        // Fechar ao clicar em links de ação
+        const viewLink = document.getElementById('actionView');
+        const editLink = document.getElementById('actionEdit');
+        const duplicateLink = document.getElementById('actionDuplicate');
+        const toggleForm = document.getElementById('actionToggle');
+        
+        if (viewLink) {
+            viewLink.addEventListener('click', function() {
+                setTimeout(() => closeActionSheet(), 100);
+            });
+        }
+        
+        if (editLink) {
+            editLink.addEventListener('click', function() {
+                setTimeout(() => closeActionSheet(), 100);
+            });
+        }
+        
+        if (duplicateLink) {
+            duplicateLink.addEventListener('click', function() {
+                setTimeout(() => closeActionSheet(), 100);
+            });
+        }
+        
+        if (toggleForm) {
+            toggleForm.addEventListener('submit', function() {
+                setTimeout(() => closeActionSheet(), 100);
+            });
+        }
     }
     
-    // Fechar ao clicar em links de ação
-    const viewLink = document.getElementById('actionView');
-    const editLink = document.getElementById('actionEdit');
-    const duplicateLink = document.getElementById('actionDuplicate');
-    const toggleForm = document.getElementById('actionToggle');
-    
-    if (viewLink) {
-        viewLink.addEventListener('click', function() {
-            setTimeout(() => closeActionSheet(), 100);
-        });
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
     }
-    
-    if (editLink) {
-        editLink.addEventListener('click', function() {
-            setTimeout(() => closeActionSheet(), 100);
-        });
-    }
-    
-    if (duplicateLink) {
-        duplicateLink.addEventListener('click', function() {
-            setTimeout(() => closeActionSheet(), 100);
-        });
-    }
-    
-    if (toggleForm) {
-        toggleForm.addEventListener('submit', function() {
-            setTimeout(() => closeActionSheet(), 100);
-        });
-    }
-});
+})();
 </script>
 @endsection
 
