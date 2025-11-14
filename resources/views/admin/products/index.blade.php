@@ -383,8 +383,21 @@
     @endif
 
     <!-- Desktop Table -->
-    <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden hidden md:block">
-        @if($products->count() > 0)
+    <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+        <style>
+            @media (min-width: 768px) {
+                .products-desktop-table {
+                    display: block !important;
+                }
+            }
+            @media (max-width: 767px) {
+                .products-desktop-table {
+                    display: none !important;
+                }
+            }
+        </style>
+        <div class="products-desktop-table">
+        @if($products && $products->count() > 0)
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead class="bg-gray-50 dark:bg-gray-700">
@@ -590,6 +603,7 @@
                 </div>
             </div>
         @endif
+        </div>
     </div>
 
     <!-- Mobile Action Sheet -->
