@@ -6,6 +6,14 @@
     <meta name="description" content="Portal de produtos de limpeza profissionais e domésticos - Nova Rosa MT. Encontre os melhores produtos para sua limpeza.">
     <meta name="keywords" content="produtos de limpeza, limpeza profissional, detergentes, desinfetantes, Nova Rosa MT">
     <title>{{ $title ?? 'Portal de Produtos de Limpeza - Nova Rosa MT' }}</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
+    <link rel="manifest" href="{{ asset('site.webmanifest') }}">
+    
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 min-h-screen flex flex-col">
