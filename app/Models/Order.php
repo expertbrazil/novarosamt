@@ -38,22 +38,47 @@ class Order extends Model
     public function getStatusBadgeAttribute(): string
     {
         return match($this->status) {
-            'pending' => 'bg-yellow-100 text-yellow-800',
-            'processing' => 'bg-blue-100 text-blue-800',
-            'completed' => 'bg-green-100 text-green-800',
-            'cancelled' => 'bg-red-100 text-red-800',
-            default => 'bg-gray-100 text-gray-800',
+            'pendente' => 'bg-yellow-100 text-yellow-800 dark:bg-yellow-600 dark:text-yellow-50',
+            'aguardando_pagamento' => 'bg-orange-100 text-orange-800 dark:bg-orange-600 dark:text-orange-50',
+            'aprovado' => 'bg-blue-100 text-blue-800 dark:bg-blue-600 dark:text-blue-50',
+            'entregue' => 'bg-green-100 text-green-800 dark:bg-green-600 dark:text-green-50',
+            'cancelado' => 'bg-red-100 text-red-800 dark:bg-red-600 dark:text-red-50',
+            default => 'bg-gray-100 text-gray-800 dark:bg-gray-600 dark:text-gray-200',
         };
     }
 
     public function getStatusLabelAttribute(): string
     {
         return match($this->status) {
-            'pending' => 'Pendente',
-            'processing' => 'Em Processamento',
-            'completed' => 'Concluído',
-            'cancelled' => 'Cancelado',
+            'pendente' => 'Pendente',
+            'aguardando_pagamento' => 'Aguardando Pagamento',
+            'aprovado' => 'Aprovado',
+            'entregue' => 'Entregue',
+            'cancelado' => 'Cancelado',
             default => 'Desconhecido',
+        };
+    }
+    
+    public static function getStatusOptions(): array
+    {
+        return [
+            'pendente' => 'Pendente',
+            'aguardando_pagamento' => 'Aguardando Pagamento',
+            'aprovado' => 'Aprovado',
+            'entregue' => 'Entregue',
+            'cancelado' => 'Cancelado',
+        ];
+    }
+    
+    public function getNextStatus(): ?string
+    {
+        return match($this->status) {
+            'pendente' => 'aguardando_pagamento',
+            'aguardando_pagamento' => 'aprovado',
+            'aprovado' => 'entregue',
+            'entregue' => null, // Não há próximo status
+            'cancelado' => null, // Não há próximo status
+            default => 'pendente',
         };
     }
 }

@@ -21,10 +21,22 @@ class CustomerController extends Controller
             });
         }
 
-        // Filtro: aniversariantes do mês corrente
-        if ($request->boolean('birthday_month')) {
-            $query->whereNotNull('birth_date')
-                  ->whereMonth('birth_date', now()->month);
+        // Filtro: status
+        if ($request->filled('status')) {
+            if ($request->status === 'active') {
+                $query->where('is_active', true);
+            } elseif ($request->status === 'inactive') {
+                $query->where('is_active', false);
+            }
+        }
+
+        // Filtro: mês de aniversário
+        if ($request->filled('birthday_month')) {
+            $month = $request->integer('birthday_month');
+            if ($month >= 1 && $month <= 12) {
+                $query->whereNotNull('birth_date')
+                      ->whereMonth('birth_date', $month);
+            }
         }
 
         $customers = $query->orderBy('created_at', 'desc')->paginate(15)->withQueryString();

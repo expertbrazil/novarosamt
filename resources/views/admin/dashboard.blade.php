@@ -67,10 +67,10 @@
     </div>
 
     <!-- Aniversariantes do Mês -->
-    <a href="{{ route('admin.customers.index', ['birthday_month' => 1]) }}" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-all hover:border-purple-200">
+    <a href="{{ route('admin.customers.index', ['birthday_month' => now()->month]) }}" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-all hover:border-purple-200">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-sm font-medium text-gray-600 mb-1">Aniversariantes</p>
+                <p class="text-sm font-medium text-gray-600 mb-1">Aniversariantes do Mês</p>
                 <p class="text-3xl font-semibold text-purple-600">{{ $birthdaysCount }}</p>
             </div>
             <div class="bg-purple-50 rounded-lg p-3">

@@ -245,6 +245,8 @@
                                 <option value="l" {{ old('unit', $product->unit)=='l' ? 'selected' : '' }}>Litros (l)</option>
                                 <option value="g" {{ old('unit', $product->unit)=='g' ? 'selected' : '' }}>Gramas (g)</option>
                                 <option value="ml" {{ old('unit', $product->unit)=='ml' ? 'selected' : '' }}>Mililitros (ml)</option>
+                                <option value="cm" {{ old('unit', $product->unit)=='cm' ? 'selected' : '' }}>Centímetros (cm)</option>
+                                <option value="un" {{ old('unit', $product->unit)=='un' ? 'selected' : '' }}>Unidade (un)</option>
                             </select>
                         </div>
                         @error('unit')
@@ -421,6 +423,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 break;
             case 'ml':
                 hint.textContent = 'Informe em ml (ex.: 500, 250)';
+                break;
+            case 'cm':
+                hint.textContent = 'Informe em centímetros (ex.: 10, 25, 50)';
+                break;
+            case 'un':
+                hint.textContent = 'Informe a quantidade de unidades (ex.: 1, 2, 10)';
                 break;
             default:
                 hint.textContent = 'Selecione uma unidade primeiro';

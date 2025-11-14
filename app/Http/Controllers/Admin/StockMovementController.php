@@ -44,8 +44,64 @@ class StockMovementController extends Controller
             $selectedProduct = Product::find($request->integer('product_id'));
         }
 
+        // Buscar todas as movimentações para calcular saldo acumulado
+        // Primeiro, obter lista de produtos únicos (sem ORDER BY para evitar erro com DISTINCT)
+        $baseQueryForProducts = StockMovement::query();
+        
+        if ($request->filled('product_id')) {
+            $baseQueryForProducts->where('product_id', $request->integer('product_id'));
+        }
+        if ($request->filled('type')) {
+            $baseQueryForProducts->where('type', $request->get('type'));
+        }
+        if ($request->filled('from')) {
+            $baseQueryForProducts->where('moved_at', '>=', $request->date('from'));
+        }
+        if ($request->filled('to')) {
+            $baseQueryForProducts->where('moved_at', '<=', $request->date('to'));
+        }
+        
+        $allProductsInMovements = $baseQueryForProducts->distinct()->pluck('product_id');
+        $initialBalances = [];
+        
+        foreach ($allProductsInMovements as $productId) {
+            // Buscar todas as movimentações anteriores às filtradas para este produto
+            $initialQuery = StockMovement::where('product_id', $productId);
+            
+            if ($request->filled('from')) {
+                $initialQuery->where('moved_at', '<', $request->date('from'));
+            }
+            
+            $initialIn = (clone $initialQuery)->whereIn('type', ['in', 'adjustment_in'])->sum('quantity');
+            $initialOut = (clone $initialQuery)->whereIn('type', ['out', 'adjustment_out'])->sum('quantity');
+            $initialBalances[$productId] = $initialIn - $initialOut;
+        }
+        
+        // Agora calcular saldo acumulado para as movimentações filtradas
+        $allMovementsForBalance = (clone $query)->orderBy('moved_at')->orderBy('id')->get();
+        $balanceMap = [];
+        
+        foreach ($allMovementsForBalance as $movement) {
+            $productId = $movement->product_id;
+            
+            // Inicializar com saldo anterior se não existir
+            if (!isset($balanceMap['_current_' . $productId])) {
+                $balanceMap['_current_' . $productId] = $initialBalances[$productId] ?? 0;
+            }
+            
+            // Calcular saldo acumulado até esta movimentação
+            if (in_array($movement->type, ['in', 'adjustment_in'])) {
+                $balanceMap['_current_' . $productId] += $movement->quantity;
+            } else {
+                $balanceMap['_current_' . $productId] -= $movement->quantity;
+            }
+            
+            // Armazenar saldo para esta movimentação específica
+            $balanceMap[$movement->id] = $balanceMap['_current_' . $productId];
+        }
+
         return view('admin.stock.index', [
-            'movements' => $query->paginate(20)->withQueryString(),
+            'movements' => $query->orderByDesc('moved_at')->paginate(20)->withQueryString(),
             'products' => Product::orderBy('name')->get(),
             'filters' => $request->only(['product_id', 'type', 'from', 'to']),
             'stats' => [
@@ -56,6 +112,7 @@ class StockMovementController extends Controller
                 'stock' => $selectedProduct?->stock,
                 'last_purchase_cost' => $selectedProduct?->last_purchase_cost,
             ],
+            'balanceMap' => $balanceMap,
         ]);
     }
 

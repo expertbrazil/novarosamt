@@ -297,6 +297,12 @@
                                 Quantidade
                             </th>
                             <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                Saldo
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                Disponível
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                 Custo Unitário
                             </th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
@@ -365,6 +371,33 @@
                                     </div>
                                     <div class="text-sm text-gray-500 dark:text-gray-400">
                                         unidades
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right">
+                                    @php
+                                        $balance = $balanceMap[$movement->id] ?? 0;
+                                    @endphp
+                                    <div class="text-sm font-medium {{ $balance >= 0 ? 'text-gray-900 dark:text-white' : 'text-red-600 dark:text-red-400' }}">
+                                        {{ number_format($balance, 0, ',', '.') }}
+                                    </div>
+                                    <div class="text-xs text-gray-500 dark:text-gray-400">
+                                        acumulado
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right">
+                                    @php
+                                        $currentStock = $movement->product->stock ?? 0;
+                                        $isLowStock = $movement->product && $movement->product->min_stock && $currentStock <= $movement->product->min_stock;
+                                    @endphp
+                                    <div class="text-sm font-medium {{ $isLowStock ? 'text-yellow-600 dark:text-yellow-400' : ($currentStock <= 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white') }}">
+                                        {{ number_format($currentStock, 0, ',', '.') }}
+                                    </div>
+                                    <div class="text-xs text-gray-500 dark:text-gray-400">
+                                        @if($movement->product && $movement->product->min_stock)
+                                            Mín: {{ $movement->product->min_stock }}
+                                        @else
+                                            atual
+                                        @endif
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right">

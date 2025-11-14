@@ -41,7 +41,13 @@ Route::middleware(['auth', 'role:admin|gerente|vendedor'])->prefix('admin')->nam
         Route::get('orders/create', [AdminOrderController::class, 'create'])->name('orders.create');
         Route::post('orders', [AdminOrderController::class, 'store'])->name('orders.store');
         Route::get('orders/{order}', [AdminOrderController::class, 'show'])->name('orders.show');
+        Route::get('orders/{order}/edit', [AdminOrderController::class, 'edit'])->name('orders.edit');
+        Route::put('orders/{order}', [AdminOrderController::class, 'update'])->name('orders.update');
+        Route::delete('orders/{order}', [AdminOrderController::class, 'destroy'])->name('orders.destroy');
         Route::post('orders/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('orders.update-status');
+        Route::post('orders/{order}/toggle-status', [AdminOrderController::class, 'toggleStatus'])->name('orders.toggle-status');
+        Route::post('orders/{order}/send-whatsapp', [AdminOrderController::class, 'sendWhatsApp'])->name('orders.send-whatsapp');
+        Route::post('orders/{order}/reverse-stock', [AdminOrderController::class, 'reverseStock'])->name('orders.reverse-stock');
 
         Route::resource('customers', CustomerController::class);
         Route::post('customers/{customer}/toggle', [CustomerController::class, 'toggle'])->name('customers.toggle');

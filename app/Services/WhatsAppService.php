@@ -43,32 +43,97 @@ class WhatsAppService
 
     private function formatOrderMessage(Order $order): string
     {
-        $items = $order->items->map(function ($item) {
-            return "• {$item->product->name} - Qtd: {$item->quantity} - R$ " . number_format($item->subtotal, 2, ',', '.');
-        })->implode("\n");
+        // Garantir que os itens estão carregados com produto e categoria
+        $order->load('items.product.category');
+        
+        $items = $order->items->map(function ($item, $index) {
+            $product = $item->product;
+            $unitInfo = '';
+            
+            // Formatar informação de unidade se disponível
+            if ($product->unit && $product->unit_value) {
+                $unitMap = [
+                    'kg' => 'kg',
+                    'g' => 'g',
+                    'l' => 'L',
+                    'ml' => 'ml',
+                    'cm' => 'cm',
+                    'un' => 'un',
+                ];
+                $unitLabel = $unitMap[strtolower($product->unit)] ?? $product->unit;
+                $unitInfo = " ({$product->unit_value} {$unitLabel})";
+            } elseif ($product->unit) {
+                $unitMap = [
+                    'kg' => 'kg',
+                    'g' => 'g',
+                    'l' => 'L',
+                    'ml' => 'ml',
+                    'cm' => 'cm',
+                    'un' => 'un',
+                ];
+                $unitLabel = $unitMap[strtolower($product->unit)] ?? $product->unit;
+                $unitInfo = " ({$unitLabel})";
+            }
+            
+            $category = $product->category ? " - {$product->category->name}" : '';
+            $priceUnit = number_format($item->price, 2, ',', '.');
+            $subtotal = number_format($item->subtotal, 2, ',', '.');
+            
+            return ($index + 1) . ". *{$product->name}*{$category}{$unitInfo}\n   Qtd: {$item->quantity} x R$ {$priceUnit} = R$ {$subtotal}";
+        })->implode("\n\n");
 
         $totalFormatted = number_format($order->total, 2, ',', '.');
         $dateFormatted = $order->created_at->format('d/m/Y H:i');
-        $observations = $order->observations ?? 'Nenhuma observação';
+        $statusLabel = $order->status_label;
+        
+        // Informações adicionais
+        $paymentInfo = '';
+        if ($order->payment_method) {
+            $paymentMethods = [
+                'pix' => 'PIX',
+                'credito' => 'Cartão de Crédito',
+                'debito' => 'Cartão de Débito',
+                'dinheiro' => 'Dinheiro',
+                'boleto' => 'Boleto',
+                'transferencia' => 'Transferência',
+            ];
+            $paymentLabel = $paymentMethods[strtolower($order->payment_method)] ?? ucfirst($order->payment_method);
+            $paymentInfo = "\n💳 *Forma de Pagamento:* {$paymentLabel}";
+        }
+        
+        $dueDateInfo = '';
+        if ($order->due_date) {
+            $dueDateInfo = "\n📅 *Data de Vencimento:* {$order->due_date->format('d/m/Y')}";
+        }
+        
+        $observations = '';
+        if ($order->observations) {
+            $observations = "\n\n📝 *Observações:*\n{$order->observations}";
+        }
 
         return <<<MESSAGE
 🛒 *NOVO PEDIDO #{$order->id}*
+━━━━━━━━━━━━━━━━━━━━
 
-👤 *Cliente:* {$order->customer_name}
+*INFORMAÇÕES DO CLIENTE*
+👤 *Nome:* {$order->customer_name}
 📧 *Email:* {$order->customer_email}
 📞 *Telefone:* {$order->customer_phone}
-🆔 *CPF:* {$order->customer_cpf}
+🆔 *CPF/CNPJ:* {$order->customer_cpf}
 📍 *Endereço:* {$order->customer_address}
 
-📦 *Itens:*
+━━━━━━━━━━━━━━━━━━━━
+*ITENS DO PEDIDO*
+
 {$items}
 
-💰 *Total: R$ {$totalFormatted}*
+━━━━━━━━━━━━━━━━━━━━
+💰 *TOTAL: R$ {$totalFormatted}*
 
-📝 *Observações:*
-{$observations}
+📊 *Status:* {$statusLabel}{$paymentInfo}{$dueDateInfo}{$observations}
 
-⏰ *Data:* {$dateFormatted}
+⏰ *Data do Pedido:* {$dateFormatted}
+━━━━━━━━━━━━━━━━━━━━
 MESSAGE;
     }
 

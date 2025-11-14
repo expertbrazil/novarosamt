@@ -78,7 +78,7 @@
     <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
         <div class="px-4 py-5 sm:p-6">
             <form method="GET" class="space-y-4">
-                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
                     <!-- Search -->
                     <div class="sm:col-span-2">
                         <label for="search" class="sr-only">Buscar clientes</label>
@@ -107,6 +107,26 @@
                         </select>
                     </div>
 
+                    <!-- Mês de Aniversário -->
+                    <div>
+                        <label for="birthday_month" class="sr-only">Mês de Aniversário</label>
+                        <select name="birthday_month" id="birthday_month" class="form-input">
+                            <option value="">Todos os meses</option>
+                            <option value="1" {{ request('birthday_month') == '1' ? 'selected' : '' }}>Janeiro</option>
+                            <option value="2" {{ request('birthday_month') == '2' ? 'selected' : '' }}>Fevereiro</option>
+                            <option value="3" {{ request('birthday_month') == '3' ? 'selected' : '' }}>Março</option>
+                            <option value="4" {{ request('birthday_month') == '4' ? 'selected' : '' }}>Abril</option>
+                            <option value="5" {{ request('birthday_month') == '5' ? 'selected' : '' }}>Maio</option>
+                            <option value="6" {{ request('birthday_month') == '6' ? 'selected' : '' }}>Junho</option>
+                            <option value="7" {{ request('birthday_month') == '7' ? 'selected' : '' }}>Julho</option>
+                            <option value="8" {{ request('birthday_month') == '8' ? 'selected' : '' }}>Agosto</option>
+                            <option value="9" {{ request('birthday_month') == '9' ? 'selected' : '' }}>Setembro</option>
+                            <option value="10" {{ request('birthday_month') == '10' ? 'selected' : '' }}>Outubro</option>
+                            <option value="11" {{ request('birthday_month') == '11' ? 'selected' : '' }}>Novembro</option>
+                            <option value="12" {{ request('birthday_month') == '12' ? 'selected' : '' }}>Dezembro</option>
+                        </select>
+                    </div>
+
                     <!-- Actions -->
                     <div class="flex space-x-2">
                         <button type="submit" class="btn-primary flex-1">
@@ -115,7 +135,7 @@
                             </svg>
                             Filtrar
                         </button>
-                        @if(request()->hasAny(['search', 'status']))
+                        @if(request()->hasAny(['search', 'status', 'birthday_month']))
                             <a href="{{ route('admin.customers.index') }}" class="btn-secondary">
                                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -295,14 +315,14 @@
                 </svg>
                 <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">Nenhum cliente encontrado</h3>
                 <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                    @if(request()->hasAny(['search', 'status']))
+                    @if(request()->hasAny(['search', 'status', 'birthday_month']))
                         Tente ajustar os filtros ou criar um novo cliente.
                     @else
                         Comece criando seu primeiro cliente.
                     @endif
                 </p>
                 <div class="mt-6">
-                    @if(request()->hasAny(['search', 'status']))
+                    @if(request()->hasAny(['search', 'status', 'birthday_month']))
                         <a href="{{ route('admin.customers.index') }}" class="btn-secondary mr-3">
                             Limpar Filtros
                         </a>
