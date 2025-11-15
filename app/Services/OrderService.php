@@ -61,6 +61,7 @@ class OrderService
             }
             
             // Set order customer fields
+            $data['customer_id'] = $customer->id;
             $data['customer_name'] = $customer->name;
             $personType = $customer->person_type ?? ($data['customer_person_type'] ?? 'PF');
             if ($personType === 'PF') {
