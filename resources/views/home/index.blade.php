@@ -167,12 +167,19 @@
                             .category-slider{overflow:hidden}
                             .category-slider .slider-track{display:flex;gap:1.5rem;will-change:transform}
                             .category-slider:hover .slider-track{animation-play-state: paused}
+                            .category-slider .slide{flex:0 0 calc((100% - 3*1.5rem)/4)} /* 4 visible (3 gaps) */
+                            @media (max-width: 1024px){ /* md/lg boundary */
+                                .category-slider .slide{flex:0 0 calc((100% - 1*1.5rem)/2)} /* 2 visible */
+                            }
+                            @media (max-width: 640px){ /* sm */
+                                .category-slider .slide{flex:0 0 100%} /* 1 visible */
+                            }
                             @keyframes slider-scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
                         </style>
                         <div class="category-slider">
                             <div class="slider-track" data-speed="70">
                                 @foreach($category->products as $product)
-                                <a href="{{ route('product.show', $product->id) }}" class="bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden group block focus:outline-none focus:ring-2 focus:ring-indigo-500 min-w-[260px] w-64">
+                                <a href="{{ route('product.show', $product->id) }}" class="slide bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden group block focus:outline-none focus:ring-2 focus:ring-indigo-500">
                                     <div class="relative">
                                         @if($product->image)
                                         <img src="{{ $product->image_url }}" alt="{{ $product->name }}" class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300">
@@ -203,7 +210,7 @@
                                 track.innerHTML = track.innerHTML + track.innerHTML;
                                 // After render, compute total width and set animation duration
                                 requestAnimationFrame(() => {
-                                    const totalWidth = Array.from(track.children).reduce((w, el)=> w + el.getBoundingClientRect().width + 24 /*gap approx*/, 0);
+                                    const totalWidth = Array.from(track.children).reduce((w, el)=> w + el.getBoundingClientRect().width + parseFloat(getComputedStyle(track).columnGap || getComputedStyle(track).gap || 24), 0);
                                     const speed = Number(track.dataset.speed || 70); // px per second
                                     const duration = Math.max(10, Math.round(totalWidth / speed));
                                     track.style.animation = `slider-scroll ${duration}s linear infinite`;
