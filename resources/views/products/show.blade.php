@@ -67,7 +67,7 @@
                 @endif
                 
                 <div class="flex gap-3">
-                    <a href="{{ route('order.create') }}" 
+                    <a href="{{ route('order.create', ['product_id' => $product->id, 'qty' => 1]) }}" 
                        class="flex-1 px-6 py-3 bg-indigo-600 text-white rounded-lg font-semibold text-center hover:bg-indigo-700 transition-colors">
                         Adicionar ao Pedido
                     </a>

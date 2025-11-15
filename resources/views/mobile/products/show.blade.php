@@ -129,7 +129,7 @@
         </a>
     </div>
     @else
-    <a href="{{ route('order.create') }}" 
+    <a href="{{ route('order.create', ['product_id' => $product->id, 'qty' => 1]) }}" 
        class="flex items-center justify-center w-full px-4 py-3 bg-indigo-600 text-white rounded-lg font-semibold active:scale-95 transition-transform shadow-lg">
         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>

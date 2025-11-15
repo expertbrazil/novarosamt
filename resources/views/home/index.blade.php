@@ -98,7 +98,7 @@
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                         @foreach($category->products->take(4) as $product)
-                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden group">
+                        <a href="{{ route('product.show', $product->id) }}" class="bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden group block focus:outline-none focus:ring-2 focus:ring-indigo-500">
                             <div class="relative">
                                 @if($product->image)
                                 <img src="{{ $product->image_url }}" 
@@ -155,7 +155,7 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        </a>
                         @endforeach
                     </div>
                 </section>

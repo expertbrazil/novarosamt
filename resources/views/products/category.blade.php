@@ -11,7 +11,7 @@
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         @forelse($products as $product)
-        <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+        <a href="{{ route('product.show', $product->id) }}" class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow block focus:outline-none focus:ring-2 focus:ring-indigo-500">
             @if($product->image)
             <img src="{{ $product->image_url }}" alt="{{ $product->name }}" class="w-full h-48 object-cover">
             @else
@@ -59,7 +59,7 @@
                     @endif
                 </div>
             </div>
-        </div>
+        </a>
         @empty
         <div class="col-span-4 text-center py-12">
             <p class="text-gray-500">Nenhum produto encontrado nesta categoria.</p>

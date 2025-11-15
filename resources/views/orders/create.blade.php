@@ -481,6 +481,29 @@ document.addEventListener('DOMContentLoaded', function() {
         addItem();
     }
 
+    // Prefill from URL params (product_id & qty)
+    const params = new URLSearchParams(window.location.search);
+    const preProductId = params.get('product_id');
+    const preQty = Math.max(1, Number(params.get('qty') || 1));
+    if (preProductId && repeater) {
+        // Ensure at least one row exists
+        const row = repeater.querySelector('.bg-gray-50') || null;
+        if (row) {
+            const productSelect = row.querySelector('.product-select');
+            const quantityInput = row.querySelector('.quantity-input');
+            if (productSelect) {
+                productSelect.value = preProductId;
+                const event = new Event('change');
+                productSelect.dispatchEvent(event);
+            }
+            if (quantityInput) {
+                quantityInput.value = preQty;
+                const evt = new Event('input');
+                quantityInput.dispatchEvent(evt);
+            }
+        }
+    }
+
     // ========== Máscaras e Validações ==========
     
     // Máscara de CPF
