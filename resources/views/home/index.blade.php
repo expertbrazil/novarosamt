@@ -36,6 +36,39 @@
 <!-- Features Section -->
 <div class="py-16 bg-white dark:bg-gray-800">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Search + Quick Categories -->
+        <div class="mb-12">
+            <!-- Search -->
+            <form action="{{ route('home') }}" method="GET" class="mb-6">
+                <div class="relative max-w-2xl mx-auto">
+                    <input type="text" name="q" value="{{ $search ?? '' }}" placeholder="Busque por nome ou descrição de produto..."
+                           class="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <div class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
+                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
+                        </svg>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Quick Category Cards -->
+            @if($categories->count() > 0)
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+                @foreach($categories as $cat)
+                <a href="{{ route('category.show', $cat->slug) }}" class="group block rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 hover:shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <div class="flex items-center justify-center h-10 w-10 rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 mb-3">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                        </svg>
+                    </div>
+                    <div class="text-sm font-semibold text-gray-900 dark:text-white mb-1 truncate" title="{{ $cat->name ?? 'Categoria' }}">{{ $cat->name ?? 'Categoria' }}</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400">{{ $cat->products->count() }} {{ $cat->products->count() == 1 ? 'item' : 'itens' }}</div>
+                </a>
+                @endforeach
+            </div>
+            @endif
+        </div>
+        
         <div class="text-center mb-12">
             <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-4">Por que escolher nossos produtos?</h2>
             <p class="text-lg text-gray-600 dark:text-gray-300">Qualidade, eficiência e confiança em cada produto</p>

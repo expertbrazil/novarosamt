@@ -12,10 +12,21 @@ class HomeController extends Controller
 {
     public function index()
     {
-        $categories = Category::where('is_active', true)
-            ->with(['products' => function ($query) {
+        $search = trim((string) request('q', ''));
+
+        $categories = Category::select('id','name','slug','description')
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->with(['products' => function ($query) use ($search) {
                 $query->where('is_active', true)
                       ->where('stock', '>', 0);
+                if ($search !== '') {
+                    $query->where(function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%")
+                          ->orWhere('description', 'like', "%{$search}%");
+                    });
+                }
+                $query->orderBy('name');
             }])
             ->get();
 
@@ -41,7 +52,13 @@ class HomeController extends Controller
 
         $useMobileLayout = request()->attributes->get('useMobileLayout', false);
         $viewPath = $useMobileLayout ? 'mobile.home.index' : 'home.index';
-        return view($viewPath, compact('categories', 'companyAddress', 'deliveryInfo', 'deliveryCities'));
+        return view($viewPath, [
+            'categories' => $categories,
+            'companyAddress' => $companyAddress,
+            'deliveryInfo' => $deliveryInfo,
+            'deliveryCities' => $deliveryCities,
+            'search' => $search,
+        ]);
     }
 
     public function category(string $slug)
