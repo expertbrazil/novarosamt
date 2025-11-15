@@ -135,68 +135,82 @@
                         </a>
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        @foreach($category->products->take(4) as $product)
-                        <a href="{{ route('product.show', $product->id) }}" class="bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden group block focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                            <div class="relative">
-                                @if($product->image)
-                                <img src="{{ $product->image_url }}" 
-                                     alt="{{ $product->name }}" 
-                                     class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300">
-                                @else
-                                <div class="w-full h-48 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center">
-                                    <svg class="w-16 h-16 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-                                    </svg>
-                                </div>
-                                @endif
-                            </div>
-                            
-                            <div class="p-6">
-                                <h3 class="font-semibold text-lg text-gray-900 dark:text-white mb-2 line-clamp-1">{{ $product->name }}</h3>
-                                <p class="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-2">{{ $product->description }}</p>
-                                
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <span class="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
-                                            R$ {{ number_format($product->sale_price ?? $product->price, 2, ',', '.') }}
-                                        </span>
-                                        @if($product->unit || $product->unit_value)
-                                        <div class="flex items-center mt-1">
-                                            <svg class="w-4 h-4 text-gray-400 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
-                                            </svg>
-                                            <span class="text-sm text-gray-500 dark:text-gray-400">
-                                                @php
-                                                    $unitMap = [
-                                                        'l' => 'Litros',
-                                                        'ml' => 'Mililitros',
-                                                        'kg' => 'Quilogramas',
-                                                        'g' => 'Gramas',
-                                                        'un' => 'Unidades',
-                                                        'pc' => 'Peças',
-                                                        'm' => 'Metros',
-                                                        'cm' => 'Centímetros',
-                                                        'm²' => 'Metros Quadrados',
-                                                        'm³' => 'Metros Cúbicos',
-                                                    ];
-                                                    $fullUnit = $unitMap[strtolower($product->unit ?? '')] ?? ($product->unit ?? '');
-                                                    $displayValue = $product->unit_value ? rtrim(rtrim(number_format((float)$product->unit_value, 3, ',', '.'), '0'), ',') : '';
-                                                @endphp
-                                                @if($product->unit_value && $product->unit)
-                                                    {{ $displayValue }} {{ $fullUnit }}
-                                                @elseif($product->unit)
-                                                    {{ $fullUnit }}
-                                                @endif
-                                            </span>
+                    @php $prodCount = $category->products->count(); @endphp
+                    @if($prodCount <= 1)
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                            @foreach($category->products as $product)
+                                <a href="{{ route('product.show', $product->id) }}" class="bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden group block focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                    <div class="relative">
+                                        @if($product->image)
+                                        <img src="{{ $product->image_url }}" alt="{{ $product->name }}" class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300">
+                                        @else
+                                        <div class="w-full h-48 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center">
+                                            <svg class="w-16 h-16 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
                                         </div>
                                         @endif
                                     </div>
-                                </div>
+                                    <div class="p-6">
+                                        <h3 class="font-semibold text-lg text-gray-900 dark:text-white mb-2 line-clamp-1">{{ $product->name }}</h3>
+                                        <p class="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-2">{{ $product->description }}</p>
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <span class="text-2xl font-bold text-indigo-600 dark:text-indigo-400">R$ {{ number_format($product->sale_price ?? $product->price, 2, ',', '.') }}</span>
+                                            </div>
+                                            <svg class="w-5 h-5 text-gray-400 group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                                        </div>
+                                    </div>
+                                </a>
+                            @endforeach
+                        </div>
+                    @else
+                        <style>
+                            .category-slider{overflow:hidden}
+                            .category-slider .slider-track{display:flex;gap:1.5rem;will-change:transform}
+                            .category-slider:hover .slider-track{animation-play-state: paused}
+                            @keyframes slider-scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+                        </style>
+                        <div class="category-slider">
+                            <div class="slider-track" data-speed="70">
+                                @foreach($category->products as $product)
+                                <a href="{{ route('product.show', $product->id) }}" class="bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden group block focus:outline-none focus:ring-2 focus:ring-indigo-500 min-w-[260px] w-64">
+                                    <div class="relative">
+                                        @if($product->image)
+                                        <img src="{{ $product->image_url }}" alt="{{ $product->name }}" class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300">
+                                        @else
+                                        <div class="w-full h-48 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center">
+                                            <svg class="w-16 h-16 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                                        </div>
+                                        @endif
+                                    </div>
+                                    <div class="p-6">
+                                        <h3 class="font-semibold text-lg text-gray-900 dark:text-white mb-2 line-clamp-1">{{ $product->name }}</h3>
+                                        <p class="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-2">{{ $product->description }}</p>
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-2xl font-bold text-indigo-600 dark:text-indigo-400">R$ {{ number_format($product->sale_price ?? $product->price, 2, ',', '.') }}</span>
+                                            <svg class="w-5 h-5 text-gray-400 group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                                        </div>
+                                    </div>
+                                </a>
+                                @endforeach
                             </div>
-                        </a>
-                        @endforeach
-                    </div>
+                        </div>
+                        <script>
+                            (function(){
+                                const container = document.currentScript.previousElementSibling;
+                                const track = container && container.querySelector('.slider-track');
+                                if(!track) return;
+                                // Duplicate children to create seamless loop
+                                track.innerHTML = track.innerHTML + track.innerHTML;
+                                // After render, compute total width and set animation duration
+                                requestAnimationFrame(() => {
+                                    const totalWidth = Array.from(track.children).reduce((w, el)=> w + el.getBoundingClientRect().width + 24 /*gap approx*/, 0);
+                                    const speed = Number(track.dataset.speed || 70); // px per second
+                                    const duration = Math.max(10, Math.round(totalWidth / speed));
+                                    track.style.animation = `slider-scroll ${duration}s linear infinite`;
+                                });
+                            })();
+                        </script>
+                    @endif
                 </section>
                 @endif
             @endforeach
