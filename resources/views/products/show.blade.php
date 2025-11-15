@@ -25,44 +25,19 @@
                 <p class="text-gray-600 mb-6">{{ $product->description }}</p>
                 @endif
                 
-                <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="grid grid-cols-1 gap-4 mb-6">
                     <div>
                         <p class="text-sm text-gray-600 mb-1">Preço de Venda</p>
                         <p class="text-2xl font-bold text-indigo-600">
                             R$ {{ number_format($product->sale_price ?? $product->price, 2, ',', '.') }}
                         </p>
                     </div>
-                    <div>
-                        <p class="text-sm text-gray-600 mb-1">Estoque</p>
-                        <p class="text-2xl font-bold {{ $product->stock > 0 ? 'text-green-600' : 'text-red-600' }}">
-                            {{ $product->stock }}
-                        </p>
-                    </div>
                 </div>
                 
-                @if($product->unit || $product->unit_value)
+                @if($product->description)
                 <div class="mb-6">
-                    <p class="text-sm text-gray-600 mb-1">Unidade</p>
-                    <p class="text-gray-900">
-                        @php
-                            $unitMap = [
-                                'l' => 'Litros',
-                                'ml' => 'Mililitros',
-                                'kg' => 'Quilogramas',
-                                'g' => 'Gramas',
-                                'un' => 'Unidades',
-                                'cm' => 'Centímetros',
-                                'm' => 'Metros'
-                            ];
-                            $fullUnit = $unitMap[strtolower($product->unit ?? '')] ?? ($product->unit ?? '');
-                            $displayValue = $product->unit_value ? rtrim(rtrim(number_format((float)$product->unit_value, 3, ',', '.'), '0'), ',') : '';
-                        @endphp
-                        @if($product->unit_value && $product->unit)
-                            {{ $displayValue }} {{ $fullUnit }}
-                        @elseif($product->unit)
-                            {{ $fullUnit }}
-                        @endif
-                    </p>
+                    <p class="text-sm text-gray-600 mb-1">Descrição</p>
+                    <p class="text-gray-900">{{ $product->description }}</p>
                 </div>
                 @endif
                 

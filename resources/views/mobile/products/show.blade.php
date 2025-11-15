@@ -34,7 +34,10 @@
     </div>
 
     @if($product->description)
-    <p class="text-gray-600 dark:text-gray-400 mb-4">{{ $product->description }}</p>
+    <div class="mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+        <p class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descrição</p>
+        <p class="text-gray-900 dark:text-white">{{ $product->description }}</p>
+    </div>
     @endif
 
     <!-- Unit Info -->
@@ -80,32 +83,12 @@
         </div>
     </div>
 
-    @if($product->profit_margin_percent)
+    @if($product->description)
     <div class="mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-        <p class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Margem de Lucro</p>
-        <p class="text-gray-900 dark:text-white">{{ number_format($product->profit_margin_percent, 1, ',', '.') }}%</p>
+        <p class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descrição</p>
+        <p class="text-gray-900 dark:text-white">{{ $product->description }}</p>
     </div>
     @endif
-
-    <!-- Stock Info -->
-    <div class="p-3 rounded-lg {{ $product->stock > 0 ? 'bg-green-50 dark:bg-green-900/20' : 'bg-red-50 dark:bg-red-900/20' }}">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-sm font-medium {{ $product->stock > 0 ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300' }} mb-1">
-                    Estoque
-                </p>
-                <p class="text-xl font-bold {{ $product->stock > 0 ? 'text-green-900 dark:text-green-100' : 'text-red-900 dark:text-red-100' }}">
-                    {{ $product->stock }} {{ $product->unit ?? 'unidades' }}
-                </p>
-            </div>
-            @if($product->min_stock)
-            <div class="text-right">
-                <p class="text-xs text-gray-600 dark:text-gray-400">Estoque Mínimo</p>
-                <p class="text-sm font-medium text-gray-900 dark:text-white">{{ $product->min_stock }}</p>
-            </div>
-            @endif
-        </div>
-    </div>
 </div>
 
 <!-- Actions -->
