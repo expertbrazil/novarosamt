@@ -55,6 +55,16 @@
                     </li>
                 </ol>
             </nav>
+            @php
+                $ordersLogoPath = \App\Models\Settings::get('orders_logo');
+                $logoPath = \App\Models\Settings::get('logo');
+                $finalLogoPath = $ordersLogoPath ?: $logoPath;
+            @endphp
+            @if($finalLogoPath && \Illuminate\Support\Facades\Storage::disk('public')->exists($finalLogoPath))
+                <div class="mt-3">
+                    <img src="{{ asset('storage/' . $finalLogoPath) }}" alt="{{ config('app.name') }}" class="h-10 w-auto object-contain" />
+                </div>
+            @endif
             <h1 class="mt-2 text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:truncate sm:text-3xl">
                 Pedido #{{ $order->id }}
             </h1>
