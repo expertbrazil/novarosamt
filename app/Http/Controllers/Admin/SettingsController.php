@@ -33,6 +33,7 @@ class SettingsController extends Controller
     {
         $request->validate([
             'logo' => 'nullable|image|mimes:jpg,jpeg,png,svg|max:2048',
+            'orders_logo' => 'nullable|image|mimes:jpg,jpeg,png,svg|max:2048',
             'whatsapp_number' => 'nullable|string|max:20',
             'whatsapp_message' => 'nullable|string|max:500',
             
@@ -63,6 +64,18 @@ class SettingsController extends Controller
             
             $logoPath = $request->file('logo')->store('settings', 'public');
             Settings::set('logo', $logoPath, 'file', 'Logomarca da empresa');
+        }
+
+        // Handle orders logo upload
+        if ($request->hasFile('orders_logo')) {
+            // Delete old orders logo if exists
+            $oldOrdersLogo = Settings::get('orders_logo');
+            if ($oldOrdersLogo && Storage::disk('public')->exists($oldOrdersLogo)) {
+                Storage::disk('public')->delete($oldOrdersLogo);
+            }
+            
+            $ordersLogoPath = $request->file('orders_logo')->store('settings', 'public');
+            Settings::set('orders_logo', $ordersLogoPath, 'file', 'Logomarca para pedidos e relatórios');
         }
 
         // WhatsApp settings

@@ -108,6 +108,52 @@
             </div>
         </div>
 
+        <!-- Logo para Pedidos e Relatórios -->
+        <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
+            <div class="px-4 py-5 sm:p-6">
+                <div class="border-b border-gray-200 dark:border-gray-700 pb-4 mb-4">
+                    <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-white">
+                        Logo para Pedidos e Relatórios
+                    </h3>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                        Envie uma logomarca específica para aparecer nos PDFs e impressões de pedidos
+                    </p>
+                </div>
+
+                <div class="space-y-4">
+                    @if(isset($settings['orders_logo']))
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Logo Atual para Pedidos
+                            </label>
+                            <img src="{{ Storage::url($settings['orders_logo']) }}" 
+                                 alt="Logo Pedidos" 
+                                 class="h-32 w-auto object-contain border border-gray-300 dark:border-gray-600 rounded-lg p-2">
+                        </div>
+                    @endif
+
+                    <div>
+                        <label for="orders_logo" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            {{ isset($settings['orders_logo']) ? 'Alterar Logo de Pedidos' : 'Enviar Logo de Pedidos' }}
+                        </label>
+                        <div class="mt-1">
+                            <input type="file" 
+                                   name="orders_logo" 
+                                   id="orders_logo"
+                                   accept="image/*"
+                                   class="form-input @error('orders_logo') border-red-300 focus:border-red-500 focus:ring-red-500 @enderror">
+                        </div>
+                        @error('orders_logo')
+                            <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                        @enderror
+                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                            Formatos aceitos: JPG, PNG, SVG. Tamanho máximo: 2MB. Esta logo será usada nos PDFs e impressões de pedidos.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Entrega -->
         <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
             <div class="px-4 py-5 sm:p-6">

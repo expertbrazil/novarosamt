@@ -138,11 +138,16 @@
         <div class="header-info">
             <div class="company-info">
                 @php
+                    // Priorizar logo de pedidos, se não existir, usar logo geral
+                    $ordersLogoPath = \App\Models\Settings::get('orders_logo');
                     $logoPath = \App\Models\Settings::get('logo');
                     $companyAddress = \App\Models\Settings::get('company_address');
+                    
+                    // Usar logo de pedidos se existir, senão usar logo geral
+                    $finalLogoPath = $ordersLogoPath ?: $logoPath;
                 @endphp
-                @if($logoPath && \Illuminate\Support\Facades\Storage::disk('public')->exists($logoPath))
-                    <img src="{{ asset('storage/' . $logoPath) }}" 
+                @if($finalLogoPath && \Illuminate\Support\Facades\Storage::disk('public')->exists($finalLogoPath))
+                    <img src="{{ asset('storage/' . $finalLogoPath) }}" 
                          alt="{{ config('app.name') }}" 
                          style="max-height: 60px; max-width: 200px; margin-bottom: 10px;">
                 @else
