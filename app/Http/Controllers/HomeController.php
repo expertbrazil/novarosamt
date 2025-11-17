@@ -35,7 +35,7 @@ class HomeController extends Controller
         $deliveryInfo = Settings::get('delivery_info', '');
         
         // Buscar cidades de entrega
-        $deliveryCities = [];
+        $deliveryCities = collect([]);
         $deliveryCitiesJson = Settings::get('delivery_cities', '[]');
         if ($deliveryCitiesJson) {
             $decoded = json_decode($deliveryCitiesJson, true) ?? [];
@@ -44,7 +44,7 @@ class HomeController extends Controller
                     $municipioId = $cityData['municipio_id'] ?? $cityData;
                     $municipio = EstadoMunicipio::find($municipioId);
                     if ($municipio) {
-                        $deliveryCities[] = $municipio;
+                        $deliveryCities->push($municipio);
                     }
                 }
             }
