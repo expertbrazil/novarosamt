@@ -54,6 +54,7 @@
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Data</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Ações</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y">
@@ -61,12 +62,36 @@
                         <tr>
                             <td class="px-4 py-2">#{{ $order->id }}</td>
                             <td class="px-4 py-2">R$ {{ number_format($order->total, 2, ',', '.') }}</td>
-                            <td class="px-4 py-2">{{ $order->status_label }}</td>
+                            <td class="px-4 py-2">
+                                <span class="px-2 py-1 text-xs font-semibold rounded-full {{ $order->status_badge }}">
+                                    {{ $order->status_label }}
+                                </span>
+                            </td>
                             <td class="px-4 py-2">{{ $order->created_at->format('d/m/Y H:i') }}</td>
+                            <td class="px-4 py-2">
+                                <div class="flex items-center gap-2">
+                                    <a href="{{ route('admin.orders.show', $order) }}" 
+                                       class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+                                       title="Ver detalhes do pedido">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                        </svg>
+                                    </a>
+                                    <a href="{{ route('admin.orders.pdf', $order) }}" 
+                                       target="_blank"
+                                       class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 transition-colors"
+                                       title="Ver PDF do pedido">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                                        </svg>
+                                    </a>
+                                </div>
+                            </td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="4" class="px-4 py-2 text-center text-gray-500">Nenhum pedido para este cliente.</td>
+                            <td colspan="5" class="px-4 py-2 text-center text-gray-500">Nenhum pedido para este cliente.</td>
                         </tr>
                         @endforelse
                     </tbody>
