@@ -194,6 +194,7 @@ class OrderController extends Controller
             
             // Atualizar dados do pedido
             $order->update([
+                'customer_id' => $customer->id,
                 'customer_name' => $customer->name,
                 'customer_email' => $customer->email,
                 'customer_phone' => $customer->phone,
