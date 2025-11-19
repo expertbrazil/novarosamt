@@ -102,21 +102,10 @@
 @endif
 
 <!-- Delivery Info -->
-@if($companyAddress || count($deliveryCities) > 0)
+@if(count($deliveryCities) > 0)
 <div class="mt-8 bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
     <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">Entrega Rápida</h3>
-    
-    @if($companyAddress)
-    <div class="flex items-start mb-3">
-        <svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-        </svg>
-        <p class="text-sm text-gray-700 dark:text-gray-300">{{ $companyAddress }}</p>
-    </div>
-    @endif
-    
-    @if(count($deliveryCities) > 0)
+    <p class="text-sm text-gray-600 dark:text-gray-300 mb-3">Entrega direta no seu endereço, com comodidade e segurança.</p>
     <div>
         <p class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Cidades Atendidas:</p>
         <div class="flex flex-wrap gap-2">
@@ -132,7 +121,26 @@
             @endif
         </div>
     </div>
-    @endif
+</div>
+@endif
+
+@if(!empty($settings['whatsapp_number']))
+@php
+    $rawWhatsApp = preg_replace('/\D/', '', $settings['whatsapp_number']);
+@endphp
+<div class="mt-8 bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
+    <p class="text-xs font-semibold text-green-600 dark:text-green-400 uppercase tracking-wide mb-2">Contato</p>
+    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Fale com a gente</h3>
+    <p class="text-sm text-gray-600 dark:text-gray-300 mb-3">
+        Tire suas dúvidas e faça pedidos pelo WhatsApp.
+    </p>
+    <a href="https://wa.me/{{ $rawWhatsApp }}" target="_blank" rel="noopener"
+       class="flex items-center justify-center w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-4 rounded-lg shadow-lg active:scale-95 transition-transform">
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16.862 12.487l-.028-.018a7.5 7.5 0 10-3.338 3.338l.018.028.341 3.077a.75.75 0 001.214.494l2.423-2.022.003-.002a7.567 7.567 0 002.76-5.73 7.5 7.5 0 00-1.393-4.507z"/>
+        </svg>
+        Conversar no WhatsApp
+    </a>
 </div>
 @endif
 @endsection

@@ -11,7 +11,7 @@
             </h1>
             <p class="text-xl text-indigo-100 mb-8 max-w-3xl mx-auto">
                 Encontre os melhores produtos de limpeza para sua casa ou empresa. 
-                Qualidade garantida e entrega rápida{{ $companyAddress ? ' em ' . $companyAddress : '' }}.
+                Qualidade garantida e entrega rápida diretamente na sua casa.
             </p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
                 <a href="{{ route('order.create') }}" 
@@ -59,7 +59,7 @@
                     </svg>
                 </div>
                 <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Entrega Rápida</h3>
-                <p class="text-gray-600 dark:text-gray-300">Receba seus produtos rapidamente{{ $companyAddress ? ' em ' . $companyAddress : ' em nossa região' }}</p>
+                <p class="text-gray-600 dark:text-gray-300">Receba seus produtos rapidamente onde estiver.</p>
             </div>
             
             <div class="text-center">
@@ -234,27 +234,15 @@
 </div>
 
 <!-- Entrega Section -->
-@if($companyAddress || count($deliveryCities) > 0)
+@if(count($deliveryCities) > 0 || $deliveryInfo)
 <div class="py-16 bg-white dark:bg-gray-800">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-12">
             <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-4">Entrega Rápida</h2>
             <p class="text-lg text-gray-600 dark:text-gray-300">
-                Receba seus produtos rapidamente{{ $companyAddress ? ' em ' . $companyAddress : '' }}
+                Receba seus produtos diretamente na sua casa com toda a comodidade que você merece.
             </p>
         </div>
-
-        @if($companyAddress)
-        <div class="mb-8 text-center">
-            <div class="inline-flex items-center justify-center p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg">
-                <svg class="w-6 h-6 text-indigo-600 dark:text-indigo-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-                </svg>
-                <span class="text-gray-900 dark:text-white font-medium">{{ $companyAddress }}</span>
-            </div>
-        </div>
-        @endif
 
         @if(count($deliveryCities) > 0)
         <div class="mb-8">
@@ -286,21 +274,50 @@
 </div>
 @endif
 
-<!-- CTA Section -->
-<div class="bg-indigo-600 dark:bg-indigo-800">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div class="text-center">
-            <h2 class="text-3xl font-bold text-white mb-4">Pronto para fazer seu pedido?</h2>
-            <p class="text-xl text-indigo-100 mb-8 max-w-2xl mx-auto">
-                Entre em contato conosco e receba os melhores produtos de limpeza com entrega rápida e segura.
-            </p>
-            <a href="{{ route('order.create') }}" 
-               class="inline-flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-lg text-indigo-600 bg-white hover:bg-gray-50 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-indigo-600">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
-                </svg>
-                Fazer Pedido Agora
-            </a>
+@php
+    $hasWhatsApp = !empty($settings['whatsapp_number']);
+    $rawWhatsApp = $hasWhatsApp ? preg_replace('/\D/', '', $settings['whatsapp_number']) : null;
+@endphp
+
+<div class="bg-gray-50 dark:bg-gray-900 py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid gap-8 {{ $hasWhatsApp ? 'lg:grid-cols-2' : 'lg:grid-cols-1' }}">
+            @if($hasWhatsApp)
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 flex flex-col justify-between">
+                <div>
+                    <p class="text-sm font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wide mb-2">Contato</p>
+                    <h3 class="text-3xl font-bold text-gray-900 dark:text-white mb-3">Fale com a gente pelo WhatsApp</h3>
+                    <p class="text-gray-600 dark:text-gray-300">
+                        Estamos prontos para tirar dúvidas, enviar orçamentos e receber seus pedidos.
+                    </p>
+                </div>
+                <div class="mt-6">
+                    <a href="https://wa.me/{{ $rawWhatsApp }}" target="_blank" rel="noopener"
+                       class="inline-flex items-center justify-center w-full px-6 py-3 rounded-xl bg-green-500 hover:bg-green-600 text-white font-semibold shadow-lg transition-colors duration-150">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16.862 12.487l-.028-.018a7.5 7.5 0 10-3.338 3.338l.018.028.341 3.077a.75.75 0 001.214.494l2.423-2.022.003-.002a7.567 7.567 0 002.76-5.73 7.5 7.5 0 00-1.393-4.507z"/>
+                        </svg>
+                        Conversar no WhatsApp
+                    </a>
+                </div>
+            </div>
+            @endif
+
+            <div class="bg-indigo-600 dark:bg-indigo-800 rounded-2xl shadow-lg p-8 text-center flex flex-col justify-center">
+                <h2 class="text-3xl font-bold text-white mb-4">Pronto para fazer seu pedido?</h2>
+                <p class="text-xl text-indigo-100 mb-8">
+                    Entre em contato conosco e receba os melhores produtos de limpeza com entrega rápida e segura.
+                </p>
+                <div>
+                    <a href="{{ route('order.create') }}" 
+                       class="inline-flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-lg text-indigo-600 bg-white hover:bg-gray-50 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-indigo-600">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                        </svg>
+                        Fazer Pedido Agora
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
 </div>
