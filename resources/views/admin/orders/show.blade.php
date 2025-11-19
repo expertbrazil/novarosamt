@@ -258,6 +258,27 @@
                             </tbody>
                             <tfoot class="bg-gray-50 dark:bg-gray-700">
                                 <tr>
+                                    <th colspan="4" class="px-6 py-3 text-right text-sm font-medium text-gray-900 dark:text-white">
+                                        Subtotal:
+                                    </th>
+                                    <th class="px-6 py-3 text-sm font-semibold text-gray-900 dark:text-white">
+                                        R$ {{ number_format($order->items->sum('subtotal'), 2, ',', '.') }}
+                                    </th>
+                                </tr>
+                                <tr>
+                                    @php
+                                        $discountLabel = $order->discount_type === 'percent'
+                                            ? 'Desconto (' . rtrim(rtrim(number_format($order->discount_value ?? 0, 2, ',', '.'), '0'), ',') . '%):'
+                                            : 'Desconto:';
+                                    @endphp
+                                    <th colspan="4" class="px-6 py-3 text-right text-sm font-medium text-gray-900 dark:text-white">
+                                        {{ $discountLabel }}
+                                    </th>
+                                    <th class="px-6 py-3 text-sm font-semibold text-red-600 dark:text-red-400">
+                                        {{ ($order->discount_amount ?? 0) > 0 ? '- ' : '' }}R$ {{ number_format($order->discount_amount, 2, ',', '.') }}
+                                    </th>
+                                </tr>
+                                <tr>
                                     <th colspan="4" class="px-6 py-4 text-right text-sm font-medium text-gray-900 dark:text-white">
                                         Total do Pedido:
                                     </th>

@@ -274,8 +274,59 @@
                     </div>
                 </template>
 
-                <!-- Total -->
-                <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-600">
+                <!-- Discount -->
+                <div class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                        <label for="discount_type" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Tipo de Desconto
+                        </label>
+                        <div class="mt-1">
+                            <select name="discount_type"
+                                    id="discount_type"
+                                    class="form-input @error('discount_type') border-red-300 focus:border-red-500 focus:ring-red-500 @enderror">
+                                <option value="">Sem desconto</option>
+                                <option value="percent" {{ old('discount_type', $order->discount_type) === 'percent' ? 'selected' : '' }}>Percentual (%)</option>
+                                <option value="value" {{ old('discount_type', $order->discount_type) === 'value' ? 'selected' : '' }}>Valor (R$)</option>
+                            </select>
+                        </div>
+                        @error('discount_type')
+                            <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    <div>
+                        <label for="discount_value" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Valor do Desconto
+                        </label>
+                        <div class="mt-1">
+                            <input type="number"
+                                   step="0.01"
+                                   min="0"
+                                   name="discount_value"
+                                   id="discount_value"
+                                   value="{{ old('discount_value', $order->discount_value) }}"
+                                   {{ old('discount_type', $order->discount_type) ? '' : 'disabled' }}
+                                   class="form-input @error('discount_value') border-red-300 focus:border-red-500 focus:ring-red-500 @enderror"
+                                   placeholder="Selecione o tipo de desconto">
+                        </div>
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                            Percentual: informe um número entre 0 e 100. Valor: informe o valor em reais.
+                        </p>
+                        @error('discount_value')
+                            <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                        @enderror
+                    </div>
+                </div>
+
+                <!-- Totals -->
+                <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-600 space-y-2">
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-gray-600 dark:text-gray-300">Subtotal:</span>
+                        <span class="font-medium text-gray-900 dark:text-white" id="subtotal">R$ 0,00</span>
+                    </div>
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-gray-600 dark:text-gray-300" id="discountLabel">Desconto:</span>
+                        <span class="font-medium text-red-600 dark:text-red-400" id="discountAmount">R$ 0,00</span>
+                    </div>
                     <div class="flex justify-between items-center">
                         <span class="text-lg font-medium text-gray-900 dark:text-white">Total do Pedido:</span>
                         <span class="text-2xl font-bold text-indigo-600 dark:text-indigo-400" id="total">R$ 0,00</span>
@@ -332,23 +383,78 @@
 document.addEventListener('DOMContentLoaded', function() {
     const repeater = document.getElementById('itemsRepeater');
     const template = document.getElementById('itemRowTemplate').content;
+    const subtotalEl = document.getElementById('subtotal');
     const totalEl = document.getElementById('total');
+    const discountAmountEl = document.getElementById('discountAmount');
+    const discountLabelEl = document.getElementById('discountLabel');
+    const discountTypeEl = document.getElementById('discount_type');
+    const discountValueEl = document.getElementById('discount_value');
 
     function formatBRL(value) {
         return 'R$ ' + (Number(value || 0)).toFixed(2).replace('.', ',');
     }
 
-    function parseBRL(value) {
-        return parseFloat(value.replace(/[^\d,]/g, '').replace(',', '.')) || 0;
+    function updateDiscountFieldState() {
+        const type = discountTypeEl.value;
+        const hasType = !!type;
+        discountValueEl.disabled = !hasType;
+
+        if (type === 'percent') {
+            discountValueEl.max = 100;
+            discountValueEl.placeholder = 'Ex: 10 (para 10%)';
+        } else if (type === 'value') {
+            discountValueEl.removeAttribute('max');
+            discountValueEl.placeholder = 'Ex: 50 (em R$)';
+        } else {
+            discountValueEl.removeAttribute('max');
+            discountValueEl.placeholder = 'Selecione o tipo de desconto';
+            discountValueEl.value = '';
+        }
     }
 
-    function recalculateTotal() {
-        let total = 0;
+    function calculateDiscount(subtotal) {
+        const type = discountTypeEl.value;
+        let value = parseFloat(discountValueEl.value);
+
+        if (!type || Number.isNaN(value)) {
+            return { amount: 0, total: subtotal, label: 'Desconto:' };
+        }
+
+        value = Math.max(0, value);
+        let amount = 0;
+        let label = 'Desconto:';
+
+        if (type === 'percent') {
+            value = Math.min(value, 100);
+            discountValueEl.value = value;
+            amount = subtotal * (value / 100);
+            label = `Desconto (${value}%):`;
+        } else if (type === 'value') {
+            amount = Math.min(value, subtotal);
+        }
+
+        return {
+            amount,
+            total: Math.max(0, subtotal - amount),
+            label,
+        };
+    }
+
+    function recalculateTotals() {
+        let subtotal = 0;
         repeater.querySelectorAll('.subtotal-display').forEach(subtotalInput => {
             const value = subtotalInput.dataset.value ? Number(subtotalInput.dataset.value) : 0;
-            total += value;
+            subtotal += value;
         });
-        totalEl.textContent = formatBRL(total);
+
+        subtotalEl.textContent = formatBRL(subtotal);
+
+        const discountData = calculateDiscount(subtotal);
+        discountLabelEl.textContent = discountData.label;
+        discountAmountEl.textContent = discountData.amount > 0
+            ? '- ' + formatBRL(discountData.amount)
+            : formatBRL(0);
+        totalEl.textContent = formatBRL(discountData.total);
     }
 
     function bindItemRow(row) {
@@ -364,31 +470,28 @@ document.addEventListener('DOMContentLoaded', function() {
             const price = selectedOption ? Number(selectedOption.dataset.price || 0) : 0;
             const stock = selectedOption ? Number(selectedOption.dataset.stock || 0) : 0;
             const quantity = Math.min(Number(quantityInput.value || 1), stock || 1);
-            
-            // Update quantity limits
+
             quantityInput.max = stock || 1;
             quantityInput.value = quantity;
-            
-            // Update displays
+
             priceDisplay.value = price.toFixed(2).replace('.', ',');
             const subtotal = quantity * price;
             subtotalDisplay.value = subtotal.toFixed(2).replace('.', ',');
             subtotalDisplay.dataset.value = subtotal;
-            
-            // Update hidden fields
+
             productIdHidden.value = productSelect.value || '';
             quantityHidden.value = quantity;
-            
-            recalculateTotal();
+
+            recalculateTotals();
         }
 
         productSelect.addEventListener('change', updateRowCalculations);
         quantityInput.addEventListener('input', updateRowCalculations);
-        
+
         row.querySelector('.remove-item').addEventListener('click', function() {
             if (repeater.children.length > 1) {
                 row.remove();
-                recalculateTotal();
+                recalculateTotals();
             } else {
                 showToast('Deve haver pelo menos um item no pedido', 'warning');
             }
@@ -401,36 +504,33 @@ document.addEventListener('DOMContentLoaded', function() {
         const index = repeater.children.length;
         const clone = document.importNode(template, true);
         const row = clone.querySelector('.bg-gray-50');
-        
-        // Update name attributes
+
         row.querySelectorAll('input[name], select[name]').forEach(element => {
             if (element.name) {
                 element.name = element.name.replace('IDX', index);
             }
         });
-        
+
         repeater.appendChild(clone);
         bindItemRow(repeater.lastElementChild);
     }
 
-    // Add item button
     document.getElementById('addItemBtn').addEventListener('click', addItem);
 
-    // Form validation
     document.getElementById('adminOrderForm').addEventListener('submit', function(e) {
         const rows = repeater.querySelectorAll('.bg-gray-50');
         let hasValidItems = false;
-        
+
         for (const row of rows) {
             const productId = row.querySelector('.product-id').value;
             const quantity = Number(row.querySelector('.quantity-hidden').value || 0);
-            
+
             if (productId && quantity > 0) {
                 hasValidItems = true;
                 break;
             }
         }
-        
+
         if (!hasValidItems) {
             e.preventDefault();
             showToast('Adicione pelo menos um item válido ao pedido', 'error');
@@ -438,7 +538,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Initialize with existing items or one empty item
+    discountTypeEl.addEventListener('change', () => {
+        updateDiscountFieldState();
+        recalculateTotals();
+    });
+    discountValueEl.addEventListener('input', recalculateTotals);
+
+    updateDiscountFieldState();
+
     @if($order->items->count() > 0)
         const existingItems = @json($order->items->map(function($item) {
             return [
@@ -448,18 +555,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 'subtotal' => $item->subtotal,
             ];
         }));
-        
+
         existingItems.forEach(item => {
             addItem();
             const lastRow = repeater.lastElementChild;
             const productSelect = lastRow.querySelector('.product-select');
             const quantityInput = lastRow.querySelector('.quantity-input');
-            
-            // Set product
+
             productSelect.value = item.product_id;
             productSelect.dispatchEvent(new Event('change'));
-            
-            // Set quantity
+
             quantityInput.value = item.quantity;
             quantityInput.dispatchEvent(new Event('input'));
         });

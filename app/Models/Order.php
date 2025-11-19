@@ -23,6 +23,9 @@ class Order extends Model
         'status',
         'due_date',
         'payment_method',
+        'discount_type',
+        'discount_value',
+        'discount_amount',
         'whatsapp_sent_at',
         'delivered_at',
     ];
@@ -31,6 +34,8 @@ class Order extends Model
         'total' => 'decimal:2',
         'due_date' => 'date',
         'delivered_at' => 'date',
+        'discount_value' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
         'whatsapp_sent_at' => 'datetime',
     ];
 

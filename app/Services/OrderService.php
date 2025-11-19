@@ -17,6 +17,34 @@ class OrderService
     ) {
     }
 
+    public function calculateDiscount(float $subtotal, ?string $type, ?float $value): array
+    {
+        $type = $type ?: null;
+        $value = $value !== null ? (float) $value : 0;
+        $value = max(0, $value);
+
+        $discountAmount = 0;
+
+        if ($type === 'percent') {
+            $value = min($value, 100);
+            $discountAmount = round($subtotal * ($value / 100), 2);
+        } elseif ($type === 'value') {
+            $discountAmount = min($value, $subtotal);
+        } else {
+            $type = null;
+            $value = 0;
+        }
+
+        $total = max(0, round($subtotal - $discountAmount, 2));
+
+        return [
+            'type' => $type,
+            'value' => $value,
+            'amount' => $discountAmount,
+            'total' => $total,
+        ];
+    }
+
     public function createOrder(array $data): Order
     {
         return DB::transaction(function () use ($data) {
@@ -107,7 +135,16 @@ class OrderService
                 ];
             }
 
-            $data['total'] = $total;
+            $discountData = $this->calculateDiscount(
+                $total,
+                $data['discount_type'] ?? null,
+                $data['discount_value'] ?? null
+            );
+
+            $data['discount_type'] = $discountData['type'];
+            $data['discount_value'] = $discountData['value'];
+            $data['discount_amount'] = $discountData['amount'];
+            $data['total'] = $discountData['total'];
             $data['status'] = $data['status'] ?? 'pendente'; // Status padrão: Pendente
             $order = Order::create($data);
 

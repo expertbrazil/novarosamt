@@ -70,6 +70,8 @@ class OrderController extends Controller
             'observations' => 'nullable|string',
             'due_date' => 'nullable|date',
             'payment_method' => 'nullable|string|in:pix,credito,debito,dinheiro,boleto,transferencia',
+            'discount_type' => 'nullable|in:percent,value',
+            'discount_value' => 'nullable|required_with:discount_type|numeric|min:0',
         ], [
             'items.required' => 'Selecione pelo menos um produto.',
         ]);
@@ -79,6 +81,8 @@ class OrderController extends Controller
             $data['customer_id'] = (int) $request->customer_id;
             $data['due_date'] = $request->due_date ?: null;
             $data['payment_method'] = $request->payment_method ?: null;
+            $data['discount_type'] = $request->discount_type ?: null;
+            $data['discount_value'] = $request->discount_type ? $request->discount_value : null;
 
             // Verifica se cliente está ativo
             $customer = Customer::findOrFail($data['customer_id']);
@@ -185,26 +189,15 @@ class OrderController extends Controller
             'due_date' => 'nullable|date',
             'payment_method' => 'nullable|string|in:pix,credito,debito,dinheiro,boleto,transferencia',
             'status' => 'required|in:pendente,aguardando_pagamento,aprovado,entregue,cancelado',
+            'discount_type' => 'nullable|in:percent,value',
+            'discount_value' => 'nullable|required_with:discount_type|numeric|min:0',
         ], [
             'items.required' => 'Selecione pelo menos um produto.',
         ]);
 
         try {
             $customer = Customer::findOrFail($request->customer_id);
-            
-            // Atualizar dados do pedido
-            $order->update([
-                'customer_id' => $customer->id,
-                'customer_name' => $customer->name,
-                'customer_email' => $customer->email,
-                'customer_phone' => $customer->phone,
-                'customer_cpf' => $customer->person_type === 'PF' ? $customer->cpf : $customer->cnpj,
-                'customer_address' => $this->buildAddressString($customer),
-                'observations' => $request->observations,
-                'due_date' => $request->due_date ?: null,
-                'payment_method' => $request->payment_method ?: null,
-                'status' => $request->status,
-            ]);
+            $customerAddress = $this->buildAddressString($customer);
 
             // Recalcular total e atualizar itens
             $total = 0;
@@ -224,7 +217,28 @@ class OrderController extends Controller
                 ]);
             }
 
-            $order->update(['total' => $total]);
+            $discountData = $this->orderService->calculateDiscount(
+                $total,
+                $request->discount_type ?: null,
+                $request->discount_type ? $request->discount_value : null
+            );
+
+            $order->update([
+                'customer_id' => $customer->id,
+                'customer_name' => $customer->name,
+                'customer_email' => $customer->email,
+                'customer_phone' => $customer->phone,
+                'customer_cpf' => $customer->person_type === 'PF' ? $customer->cpf : $customer->cnpj,
+                'customer_address' => $customerAddress,
+                'observations' => $request->observations,
+                'due_date' => $request->due_date ?: null,
+                'payment_method' => $request->payment_method ?: null,
+                'status' => $request->status,
+                'discount_type' => $discountData['type'],
+                'discount_value' => $discountData['value'],
+                'discount_amount' => $discountData['amount'],
+                'total' => $discountData['total'],
+            ]);
 
             return redirect()->route('admin.orders.show', $order)
                 ->with('success', 'Pedido atualizado com sucesso!');
