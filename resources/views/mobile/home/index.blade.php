@@ -36,10 +36,10 @@
                 <a href="{{ route('product.show', $product->id) }}" class="block bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden active:scale-[0.98] transition-transform">
                     <div class="flex">
                         @if($product->image)
-                        <div class="w-24 h-24 flex-shrink-0">
+                        <div class="w-24 h-24 flex-shrink-0 p-2">
                             <img src="{{ $product->image_url }}" 
                                  alt="{{ $product->name }}" 
-                                 class="w-full h-full object-cover">
+                                 class="w-full h-full object-contain">
                         </div>
                         @else
                         <div class="w-24 h-24 flex-shrink-0 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center">
