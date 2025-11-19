@@ -306,6 +306,7 @@
                                         </form>
                                         @endif
                                         
+                                        @if($order->status !== 'entregue')
                                         <form action="{{ route('admin.orders.destroy', $order) }}" method="POST" class="inline" 
                                               onsubmit="return confirm('Tem certeza que deseja excluir este pedido? Esta ação não pode ser desfeita.');">
                                             @csrf
@@ -318,6 +319,7 @@
                                                 </svg>
                                             </button>
                                         </form>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>
@@ -424,6 +426,7 @@
                             </form>
                             @endif
                             
+                            @if($order->status !== 'entregue')
                             <form action="{{ route('admin.orders.destroy', $order) }}" method="POST" class="inline" 
                                   onsubmit="return confirm('Tem certeza que deseja excluir este pedido? Esta ação não pode ser desfeita.');">
                                 @csrf
@@ -437,6 +440,7 @@
                                     Excluir
                                 </button>
                             </form>
+                            @endif
                         </div>
                     </div>
                 @endforeach

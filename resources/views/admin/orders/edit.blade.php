@@ -547,14 +547,17 @@ document.addEventListener('DOMContentLoaded', function() {
     updateDiscountFieldState();
 
     @if($order->items->count() > 0)
-        const existingItems = @json($order->items->map(function($item) {
-            return [
-                'product_id' => $item->product_id,
-                'quantity' => $item->quantity,
-                'price' => $item->price,
-                'subtotal' => $item->subtotal,
-            ];
-        }));
+        @php
+            $itemsData = $order->items->map(function($item) {
+                return [
+                    'product_id' => $item->product_id,
+                    'quantity' => $item->quantity,
+                    'price' => $item->price,
+                    'subtotal' => $item->subtotal,
+                ];
+            })->values()->toArray();
+        @endphp
+        const existingItems = @json($itemsData);
 
         existingItems.forEach(item => {
             addItem();

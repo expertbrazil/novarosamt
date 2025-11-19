@@ -252,6 +252,12 @@ class OrderController extends Controller
     public function destroy(Order $order)
     {
         try {
+            // Não permitir exclusão de pedidos entregues
+            if ($order->status === 'entregue') {
+                return back()
+                    ->withErrors(['error' => 'Não é possível excluir pedidos que já foram entregues.']);
+            }
+
             $orderId = $order->id;
             $order->delete();
 
