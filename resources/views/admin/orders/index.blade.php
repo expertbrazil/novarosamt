@@ -182,7 +182,14 @@
     <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
         @if($orders->count() > 0)
             <!-- Desktop Table -->
-            <div class="hidden md:block overflow-x-auto">
+            <div class="desktop-orders-table overflow-x-auto" style="display: none;">
+                <style>
+                    @media (min-width: 768px) {
+                        .desktop-orders-table {
+                            display: block !important;
+                        }
+                    }
+                </style>
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead class="bg-gray-50 dark:bg-gray-700">
                         <tr>
