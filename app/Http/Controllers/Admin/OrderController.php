@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\Category;
 use App\Models\Customer;
+use App\Models\Product;
 use App\Services\OrderService;
 use App\Services\WhatsAppService;
 use Illuminate\Http\Request;
