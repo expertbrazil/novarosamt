@@ -206,7 +206,7 @@
                                 <p class="text-gray-400 text-xs font-medium mb-2">Cidades Atendidas:</p>
                                 <div class="flex flex-wrap gap-1.5 {{ $footerDeliveryCities->count() <= 3 ? 'justify-center' : '' }}">
                                     @foreach($footerDeliveryCities->take(6) as $city)
-                                        <span class="inline-block bg-gray-800 dark:bg-gray-700 px-2 py-1 rounded text-xs">
+                                        <span class="inline-block bg-indigo-600 dark:bg-indigo-600 text-white dark:text-white px-2 py-1 rounded text-xs">
                                             {{ $city->municipio }}/{{ $city->estado }}
                                         </span>
                                     @endforeach

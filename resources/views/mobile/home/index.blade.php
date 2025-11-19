@@ -110,7 +110,7 @@
         <p class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Cidades Atendidas:</p>
         <div class="flex flex-wrap gap-2">
             @foreach($deliveryCities->take(6) as $city)
-            <span class="inline-block bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 px-3 py-1 rounded-lg text-xs font-medium">
+            <span class="inline-block bg-indigo-600 dark:bg-indigo-600 text-white dark:text-white px-3 py-1 rounded-lg text-xs font-medium">
                 {{ $city->municipio }}/{{ $city->estado }}
             </span>
             @endforeach

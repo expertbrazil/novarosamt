@@ -335,9 +335,9 @@
             </h3>
             <div class="flex flex-wrap justify-center gap-3">
                 @foreach($deliveryCities as $city)
-                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 text-center min-w-[150px]">
-                    <p class="text-sm font-medium text-gray-900 dark:text-white">{{ $city->municipio }}</p>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ $city->estado }}</p>
+                <div class="bg-indigo-600 dark:bg-indigo-600 rounded-lg p-3 text-center min-w-[150px]">
+                    <p class="text-sm font-medium text-white dark:text-white">{{ $city->municipio }}</p>
+                    <p class="text-xs text-indigo-100 dark:text-indigo-100">{{ $city->estado }}</p>
                 </div>
                 @endforeach
             </div>
