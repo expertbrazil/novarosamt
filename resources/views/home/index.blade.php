@@ -139,27 +139,69 @@
                     @if($prodCount <= 1)
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                             @foreach($category->products as $product)
-                                <a href="{{ route('product.show', $product->id) }}" class="bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden group block focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                                    <div class="relative">
-                                        @if($product->image)
-                                        <img src="{{ $product->image_url }}" alt="{{ $product->name }}" class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300">
-                                        @else
-                                        <div class="w-full h-48 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center">
-                                            <svg class="w-16 h-16 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden group">
+                                    <a href="{{ route('product.show', $product->id) }}" class="block focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                        <div class="relative">
+                                            @if($product->image)
+                                            <img src="{{ $product->image_url }}" alt="{{ $product->name }}" class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300">
+                                            @else
+                                            <div class="w-full h-48 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center">
+                                                <svg class="w-16 h-16 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                                            </div>
+                                            @endif
                                         </div>
+                                        <div class="p-6">
+                                            <h3 class="font-semibold text-lg text-gray-900 dark:text-white mb-2 line-clamp-1">{{ $product->name }}</h3>
+                                            <p class="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-2">{{ $product->description }}</p>
+                                            <div class="flex items-center justify-between mb-4">
+                                                <div>
+                                                    <span class="text-2xl font-bold text-indigo-600 dark:text-indigo-400">R$ {{ number_format($product->sale_price ?? $product->price, 2, ',', '.') }}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </a>
+                                    <div class="px-6 pb-6">
+                                        @php
+                                            $cart = session('cart', []);
+                                            $inCart = false;
+                                            $cartQuantity = 0;
+                                            foreach ($cart as $item) {
+                                                if ($item['product_id'] == $product->id) {
+                                                    $inCart = true;
+                                                    $cartQuantity = $item['quantity'];
+                                                    break;
+                                                }
+                                            }
+                                        @endphp
+                                        @if($inCart)
+                                            <div class="flex gap-2 items-center">
+                                                <a href="{{ route('cart.index') }}" class="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium text-center">
+                                                    <svg class="w-5 h-5 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                                    </svg>
+                                                    Adicionado ({{ $cartQuantity }})
+                                                </a>
+                                                <a href="{{ route('cart.index') }}" class="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" title="Ver carrinho">
+                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                                    </svg>
+                                                </a>
+                                            </div>
+                                        @else
+                                            <form method="POST" action="{{ route('cart.add') }}" class="flex gap-2">
+                                                @csrf
+                                                <input type="hidden" name="product_id" value="{{ $product->id }}">
+                                                <input type="number" name="quantity" value="1" min="1" max="{{ $product->stock }}" class="w-20 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white">
+                                                <button type="submit" class="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium">
+                                                    <svg class="w-5 h-5 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                                    </svg>
+                                                    Adicionar
+                                                </button>
+                                            </form>
                                         @endif
                                     </div>
-                                    <div class="p-6">
-                                        <h3 class="font-semibold text-lg text-gray-900 dark:text-white mb-2 line-clamp-1">{{ $product->name }}</h3>
-                                        <p class="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-2">{{ $product->description }}</p>
-                                        <div class="flex items-center justify-between">
-                                            <div>
-                                                <span class="text-2xl font-bold text-indigo-600 dark:text-indigo-400">R$ {{ number_format($product->sale_price ?? $product->price, 2, ',', '.') }}</span>
-                                            </div>
-                                            <svg class="w-5 h-5 text-gray-400 group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                                        </div>
-                                    </div>
-                                </a>
+                                </div>
                             @endforeach
                         </div>
                     @else
@@ -179,25 +221,67 @@
                         <div class="category-slider">
                             <div class="slider-track" data-speed="70">
                                 @foreach($category->products as $product)
-                                <a href="{{ route('product.show', $product->id) }}" class="slide bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden group block focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                                    <div class="relative">
-                                        @if($product->image)
-                                        <img src="{{ $product->image_url }}" alt="{{ $product->name }}" class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300">
-                                        @else
-                                        <div class="w-full h-48 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center">
-                                            <svg class="w-16 h-16 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                                <div class="slide bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden group">
+                                    <a href="{{ route('product.show', $product->id) }}" class="block focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                        <div class="relative">
+                                            @if($product->image)
+                                            <img src="{{ $product->image_url }}" alt="{{ $product->name }}" class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300">
+                                            @else
+                                            <div class="w-full h-48 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center">
+                                                <svg class="w-16 h-16 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                                            </div>
+                                            @endif
                                         </div>
+                                        <div class="p-6">
+                                            <h3 class="font-semibold text-lg text-gray-900 dark:text-white mb-2 line-clamp-1">{{ $product->name }}</h3>
+                                            <p class="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-2">{{ $product->description }}</p>
+                                            <div class="flex items-center justify-between mb-4">
+                                                <span class="text-2xl font-bold text-indigo-600 dark:text-indigo-400">R$ {{ number_format($product->sale_price ?? $product->price, 2, ',', '.') }}</span>
+                                            </div>
+                                        </div>
+                                    </a>
+                                    <div class="px-6 pb-6">
+                                        @php
+                                            $cart = session('cart', []);
+                                            $inCart = false;
+                                            $cartQuantity = 0;
+                                            foreach ($cart as $item) {
+                                                if ($item['product_id'] == $product->id) {
+                                                    $inCart = true;
+                                                    $cartQuantity = $item['quantity'];
+                                                    break;
+                                                }
+                                            }
+                                        @endphp
+                                        @if($inCart)
+                                            <div class="flex gap-2 items-center">
+                                                <a href="{{ route('cart.index') }}" class="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium text-center">
+                                                    <svg class="w-5 h-5 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                                    </svg>
+                                                    Adicionado ({{ $cartQuantity }})
+                                                </a>
+                                                <a href="{{ route('cart.index') }}" class="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" title="Ver carrinho">
+                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                                    </svg>
+                                                </a>
+                                            </div>
+                                        @else
+                                            <form method="POST" action="{{ route('cart.add') }}" class="flex gap-2">
+                                                @csrf
+                                                <input type="hidden" name="product_id" value="{{ $product->id }}">
+                                                <input type="number" name="quantity" value="1" min="1" max="{{ $product->stock }}" class="w-20 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white">
+                                                <button type="submit" class="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium">
+                                                    <svg class="w-5 h-5 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                                    </svg>
+                                                    Adicionar
+                                                </button>
+                                            </form>
                                         @endif
                                     </div>
-                                    <div class="p-6">
-                                        <h3 class="font-semibold text-lg text-gray-900 dark:text-white mb-2 line-clamp-1">{{ $product->name }}</h3>
-                                        <p class="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-2">{{ $product->description }}</p>
-                                        <div class="flex items-center justify-between">
-                                            <span class="text-2xl font-bold text-indigo-600 dark:text-indigo-400">R$ {{ number_format($product->sale_price ?? $product->price, 2, ',', '.') }}</span>
-                                            <svg class="w-5 h-5 text-gray-400 group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                                        </div>
-                                    </div>
-                                </a>
+                                </div>
                                 @endforeach
                             </div>
                         </div>

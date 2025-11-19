@@ -68,13 +68,7 @@
     @endif
 
     <!-- Pricing -->
-    <div class="grid grid-cols-2 gap-4 mb-4">
-        <div class="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-            <p class="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Preço de Custo</p>
-            <p class="text-lg font-bold text-gray-900 dark:text-white">
-                R$ {{ number_format($product->price, 2, ',', '.') }}
-            </p>
-        </div>
+    <div class="mb-4">
         <div class="p-3 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg">
             <p class="text-xs font-medium text-indigo-600 dark:text-indigo-400 mb-1">Preço de Venda</p>
             <p class="text-lg font-bold text-indigo-600 dark:text-indigo-400">
@@ -93,6 +87,41 @@
 
 <!-- Actions -->
 <div class="space-y-3">
+    @php
+        $cart = session('cart', []);
+        $inCart = false;
+        $cartQuantity = 0;
+        foreach ($cart as $item) {
+            if ($item['product_id'] == $product->id) {
+                $inCart = true;
+                $cartQuantity = $item['quantity'];
+                break;
+            }
+        }
+    @endphp
+    
+    @if($inCart)
+        <a href="{{ route('cart.index') }}" 
+           class="flex items-center justify-center w-full px-4 py-3 bg-green-600 text-white rounded-lg font-semibold active:scale-95 transition-transform shadow-lg">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            Adicionado ao Carrinho ({{ $cartQuantity }})
+        </a>
+    @else
+        <form method="POST" action="{{ route('cart.add') }}" class="w-full">
+            @csrf
+            <input type="hidden" name="product_id" value="{{ $product->id }}">
+            <input type="hidden" name="quantity" value="1">
+            <button type="submit" class="flex items-center justify-center w-full px-4 py-3 bg-indigo-600 text-white rounded-lg font-semibold active:scale-95 transition-transform shadow-lg">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+                </svg>
+                Adicionar ao Carrinho
+            </button>
+        </form>
+    @endif
+    
     @auth
     <div class="grid grid-cols-2 gap-3">
         <a href="{{ route('admin.products.edit', $product) }}" 
@@ -111,38 +140,20 @@
             Detalhes
         </a>
     </div>
-    @else
-    <a href="{{ route('order.create', ['product_id' => $product->id, 'qty' => 1]) }}" 
-       class="flex items-center justify-center w-full px-4 py-3 bg-indigo-600 text-white rounded-lg font-semibold active:scale-95 transition-transform shadow-lg">
-        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
-        </svg>
-        Adicionar ao Pedido
-    </a>
     @endauth
 </div>
 
 <!-- Additional Info -->
-@if($product->last_purchase_cost || $product->last_purchase_at)
+@if($product->last_purchase_at)
 <div class="mt-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
     <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">Última Compra</h3>
     <div class="space-y-2">
-        @if($product->last_purchase_cost)
-        <div class="flex justify-between">
-            <span class="text-sm text-gray-600 dark:text-gray-400">Custo:</span>
-            <span class="text-sm font-medium text-gray-900 dark:text-white">
-                R$ {{ number_format($product->last_purchase_cost, 2, ',', '.') }}
-            </span>
-        </div>
-        @endif
-        @if($product->last_purchase_at)
         <div class="flex justify-between">
             <span class="text-sm text-gray-600 dark:text-gray-400">Data:</span>
             <span class="text-sm font-medium text-gray-900 dark:text-white">
                 {{ $product->last_purchase_at->format('d/m/Y') }}
             </span>
         </div>
-        @endif
     </div>
 </div>
 @endif

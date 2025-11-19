@@ -180,51 +180,33 @@
             </div>
         </div>
 
-        <!-- Produtos -->
+        <!-- Produtos do Carrinho -->
         <div class="bg-white rounded-lg shadow-md p-6 mb-6">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-xl font-semibold">Itens do Pedido</h2>
-                <button type="button" 
-                        id="addItemBtn" 
-                        class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
-                    <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                    </svg>
-                    Adicionar Item
-                </button>
+                <a href="{{ route('cart.index') }}" 
+                   class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm">
+                    Editar Carrinho
+                </a>
             </div>
             
-            <div id="itemsRepeater" class="space-y-4"></div>
-
-            <template id="itemRowTemplate">
+            <div id="itemsRepeater" class="space-y-4">
+                @foreach($cartItems as $index => $item)
                 <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-12 items-end">
                         <!-- Product -->
                         <div class="sm:col-span-6">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">
-                                Produto *
-                            </label>
-                            <select class="product-select w-full px-3 py-2 border border-gray-300 rounded-lg" required>
-                                <option value="">Selecione um produto...</option>
-                @foreach($categories as $category)
-                                    <optgroup label="{{ $category->name }}">
-                                        @foreach($category->products as $product)
-                                            <option value="{{ $product->id }}" 
-                                                    data-price="{{ $product->sale_price ?? $product->price }}" 
-                                                    data-stock="{{ $product->stock }}">
-                                                {{ $product->name }} (Estoque: {{ $product->stock }})
-                                            </option>
-                                        @endforeach
-                                    </optgroup>
-                                @endforeach
-                            </select>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Produto</label>
+                            <input type="text" 
+                                   class="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg" 
+                                   readonly 
+                                   value="{{ $item['product']->name }}">
+                            <input type="hidden" name="items[{{ $index }}][product_id]" value="{{ $item['product']->id }}">
                         </div>
-
+                        
                         <!-- Price -->
                         <div class="sm:col-span-2">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">
-                                Preço Unitário
-                            </label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Preço Unitário</label>
                             <div class="relative">
                                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <span class="text-gray-500 text-sm">R$</span>
@@ -232,26 +214,26 @@
                                 <input type="text" 
                                        class="price-display w-full px-3 py-2 pl-10 bg-gray-100 border border-gray-300 rounded-lg" 
                                        readonly 
-                                       value="0,00">
+                                       value="{{ number_format($item['product']->sale_price ?? $item['product']->price, 2, ',', '.') }}"
+                                       data-price="{{ $item['product']->sale_price ?? $item['product']->price }}">
                             </div>
                         </div>
-
+                        
                         <!-- Quantity -->
                         <div class="sm:col-span-2">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">
-                                Quantidade
-                            </label>
-                                    <input type="number" 
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Quantidade</label>
+                            <input type="number" 
+                                   name="items[{{ $index }}][quantity]"
                                    class="quantity-input w-full px-3 py-2 border border-gray-300 rounded-lg text-center" 
                                    min="1" 
-                                   value="1">
+                                   max="{{ $item['product']->stock }}"
+                                   value="{{ $item['quantity'] }}"
+                                   required>
                         </div>
-
+                        
                         <!-- Subtotal -->
                         <div class="sm:col-span-2">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">
-                                Subtotal
-                            </label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Subtotal</label>
                             <div class="relative">
                                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <span class="text-gray-500 text-sm">R$</span>
@@ -259,27 +241,14 @@
                                 <input type="text" 
                                        class="subtotal-display w-full px-3 py-2 pl-10 bg-gray-100 border border-gray-300 rounded-lg" 
                                        readonly 
-                                       value="0,00">
+                                       value="{{ number_format(($item['product']->sale_price ?? $item['product']->price) * $item['quantity'], 2, ',', '.') }}">
                             </div>
                         </div>
-
-                        <!-- Hidden Fields -->
-                        <input type="hidden" name="items[IDX][product_id]" class="product-id" value="">
-                        <input type="hidden" name="items[IDX][quantity]" class="quantity-hidden" value="1">
                     </div>
-                    
-                    <!-- Remove Button -->
-                    <div class="mt-4 flex justify-end">
-                        <button type="button" 
-                                class="remove-item text-red-600 hover:text-red-900 text-sm font-medium transition-colors">
-                            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                            </svg>
-                            Remover Item
-                        </button>
-                    </div>
+                </div>
+                @endforeach
             </div>
-            </template>
+
 
             <!-- Total -->
             <div class="mt-6 pt-6 border-t border-gray-200">
@@ -356,7 +325,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     const repeater = document.getElementById('itemsRepeater');
-    const template = document.getElementById('itemRowTemplate');
     const totalEl = document.getElementById('total');
 
     function formatBRL(value) {
@@ -367,87 +335,44 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!repeater || !totalEl) return;
         let total = 0;
         repeater.querySelectorAll('.subtotal-display').forEach(subtotalInput => {
-            const value = subtotalInput.dataset.value ? Number(subtotalInput.dataset.value) : 0;
-            total += value;
+            const priceDisplay = subtotalInput.closest('.bg-gray-50')?.querySelector('.price-display');
+            const quantityInput = subtotalInput.closest('.bg-gray-50')?.querySelector('.quantity-input');
+            
+            if (priceDisplay && quantityInput) {
+                const price = parseFloat(priceDisplay.dataset.price || 0);
+                const quantity = parseInt(quantityInput.value || 1);
+                const subtotal = price * quantity;
+                
+                subtotalInput.value = subtotal.toFixed(2).replace('.', ',');
+                total += subtotal;
+            }
         });
         totalEl.textContent = formatBRL(total);
     }
 
-    function bindItemRow(row) {
-        if (!row) return;
-        const productSelect = row.querySelector('.product-select');
-        const priceDisplay = row.querySelector('.price-display');
-        const quantityInput = row.querySelector('.quantity-input');
-        const subtotalDisplay = row.querySelector('.subtotal-display');
-        const productIdHidden = row.querySelector('.product-id');
-        const quantityHidden = row.querySelector('.quantity-hidden');
-
-        if (!productSelect || !priceDisplay || !quantityInput || !subtotalDisplay || !productIdHidden || !quantityHidden) return;
-
-        function updateRowCalculations() {
-            const selectedOption = productSelect.options[productSelect.selectedIndex];
-            const price = selectedOption ? Number(selectedOption.dataset.price || 0) : 0;
-            const stock = selectedOption ? Number(selectedOption.dataset.stock || 0) : 0;
-            const quantity = Math.max(1, Number(quantityInput.value || 1));
-            
-            // Update quantity limits
-            quantityInput.max = stock || 999999;
-            quantityInput.value = quantity;
-            
-            // Update displays
-            priceDisplay.value = price.toFixed(2).replace('.', ',');
-            const subtotal = quantity * price;
-            subtotalDisplay.value = subtotal.toFixed(2).replace('.', ',');
-            subtotalDisplay.dataset.value = subtotal;
-            
-            // Update hidden fields
-            productIdHidden.value = productSelect.value || '';
-            quantityHidden.value = quantity;
-            
-            recalculateTotal();
-        }
-
-        productSelect.addEventListener('change', updateRowCalculations);
-        quantityInput.addEventListener('input', updateRowCalculations);
-        
-        const removeBtn = row.querySelector('.remove-item');
-        if (removeBtn) {
-            removeBtn.addEventListener('click', function() {
-                if (repeater && repeater.children.length > 1) {
-                    row.remove();
+    // Bind quantity inputs to recalculate totals
+    if (repeater) {
+        repeater.querySelectorAll('.quantity-input').forEach(quantityInput => {
+            quantityInput.addEventListener('input', function() {
+                const row = this.closest('.bg-gray-50');
+                if (!row) return;
+                
+                const priceDisplay = row.querySelector('.price-display');
+                const subtotalDisplay = row.querySelector('.subtotal-display');
+                
+                if (priceDisplay && subtotalDisplay) {
+                    const price = parseFloat(priceDisplay.dataset.price || 0);
+                    const quantity = parseInt(this.value || 1);
+                    const subtotal = price * quantity;
+                    
+                    subtotalDisplay.value = subtotal.toFixed(2).replace('.', ',');
                     recalculateTotal();
-                } else {
-                    alert('Deve haver pelo menos um item no pedido');
                 }
             });
-        }
-
-        updateRowCalculations();
-    }
-
-    function addItem() {
-        if (!repeater || !template) return;
-        const index = repeater.children.length;
-        const clone = document.importNode(template.content, true);
-        const row = clone.querySelector('.bg-gray-50');
-        
-        if (!row) return;
-        
-        // Update name attributes
-        row.querySelectorAll('input[name], select[name]').forEach(element => {
-            if (element.name) {
-                element.name = element.name.replace('IDX', index);
-            }
         });
         
-        repeater.appendChild(clone);
-        bindItemRow(repeater.lastElementChild);
-    }
-
-    // Add item button
-    const addItemBtn = document.getElementById('addItemBtn');
-    if (addItemBtn) {
-        addItemBtn.addEventListener('click', addItem);
+        // Initial calculation
+        recalculateTotal();
     }
 
     // Form validation
@@ -459,8 +384,8 @@ document.addEventListener('DOMContentLoaded', function() {
             let hasValidItems = false;
             
             for (const row of rows) {
-                const productId = row.querySelector('.product-id')?.value;
-                const quantity = Number(row.querySelector('.quantity-hidden')?.value || 0);
+                const productId = row.querySelector('input[name*="[product_id]"]')?.value;
+                const quantity = Number(row.querySelector('input[name*="[quantity]"]')?.value || 0);
                 
                 if (productId && quantity > 0) {
                     hasValidItems = true;
@@ -474,34 +399,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 return false;
             }
         });
-    }
-
-    // Initialize with one item
-    if (repeater && template) {
-        addItem();
-    }
-
-    // Prefill from URL params (product_id & qty)
-    const params = new URLSearchParams(window.location.search);
-    const preProductId = params.get('product_id');
-    const preQty = Math.max(1, Number(params.get('qty') || 1));
-    if (preProductId && repeater) {
-        // Ensure at least one row exists
-        const row = repeater.querySelector('.bg-gray-50') || null;
-        if (row) {
-            const productSelect = row.querySelector('.product-select');
-            const quantityInput = row.querySelector('.quantity-input');
-            if (productSelect) {
-                productSelect.value = preProductId;
-                const event = new Event('change');
-                productSelect.dispatchEvent(event);
-            }
-            if (quantityInput) {
-                quantityInput.value = preQty;
-                const evt = new Event('input');
-                quantityInput.dispatchEvent(evt);
-            }
-        }
     }
 
     // ========== Máscaras e Validações ==========

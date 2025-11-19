@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Services\OrderService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Session;
 
 class OrderController extends Controller
 {
@@ -15,26 +16,29 @@ class OrderController extends Controller
 
     public function create()
     {
-        $categories = \App\Models\Category::where('is_active', true)
-            ->with(['products' => function ($query) {
-                $query->where('is_active', true)
-                      ->where('stock', '>', 0)
-                      ->orderBy('name');
-            }])
-            ->get()
-            ->filter(function ($category) {
-                return $category->products->isNotEmpty();
-            })
-            ->values();
+        // Carregar produtos do carrinho
+        $cart = Session::get('cart', []);
+        $cartItems = [];
+        
+        foreach ($cart as $item) {
+            $product = \App\Models\Product::find($item['product_id']);
+            if ($product && $product->is_active && $product->stock > 0) {
+                $cartItems[] = [
+                    'product' => $product,
+                    'quantity' => $item['quantity'],
+                ];
+            }
+        }
 
-        $allProducts = \App\Models\Product::where('is_active', true)
-            ->where('stock', '>', 0)
-            ->orderBy('name')
-            ->get();
+        // Se o carrinho estiver vazio, redirecionar para o carrinho
+        if (empty($cartItems)) {
+            return redirect()->route('cart.index')
+                ->with('info', 'Adicione produtos ao carrinho antes de finalizar o pedido.');
+        }
 
         $useMobileLayout = request()->attributes->get('useMobileLayout', false);
         $viewPath = $useMobileLayout ? 'mobile.orders.create' : 'orders.create';
-        return view($viewPath, compact('categories', 'allProducts'));
+        return view($viewPath, compact('cartItems'));
     }
 
     public function findCustomerByCpf(Request $request)
@@ -164,7 +168,29 @@ class OrderController extends Controller
         }
 
         try {
+            // Usar produtos do carrinho
+            $cart = Session::get('cart', []);
+            $items = [];
+            
+            foreach ($cart as $item) {
+                $product = \App\Models\Product::find($item['product_id']);
+                if ($product && $product->is_active && $product->stock >= $item['quantity']) {
+                    $items[] = [
+                        'product_id' => $product->id,
+                        'quantity' => $item['quantity'],
+                    ];
+                }
+            }
+
+            if (empty($items)) {
+                return back()
+                    ->withErrors(['error' => 'O carrinho está vazio ou contém produtos inválidos.'])
+                    ->withInput();
+            }
+
             $data = $request->all();
+            $data['items'] = $items;
+            
             if ($personType === 'PF') {
                 $data['customer_cpf'] = preg_replace('/\D/', '', $request->customer_cpf);
             } else {
@@ -173,6 +199,9 @@ class OrderController extends Controller
             $data['customer_cep'] = $cep;
             
             $order = $this->orderService->createOrder($data);
+
+            // Limpar o carrinho após criar o pedido
+            Session::forget('cart');
 
             return redirect()->route('order.success', $order->id)
                 ->with('success', 'Pedido realizado com sucesso!');

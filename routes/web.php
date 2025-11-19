@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\CartController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\CategoryController;
@@ -19,6 +20,16 @@ Route::get('/manifest.json', [ManifestController::class, 'index'])->name('manife
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/categoria/{slug}', [HomeController::class, 'category'])->name('category.show');
 Route::get('/produto/{id}', [HomeController::class, 'showProduct'])->name('product.show');
+
+// Rotas do carrinho
+Route::get('/carrinho', [CartController::class, 'index'])->name('cart.index');
+Route::post('/carrinho/adicionar', [CartController::class, 'add'])->name('cart.add');
+Route::put('/carrinho/{productId}', [CartController::class, 'update'])->name('cart.update');
+Route::delete('/carrinho/{productId}', [CartController::class, 'remove'])->name('cart.remove');
+Route::delete('/carrinho', [CartController::class, 'clear'])->name('cart.clear');
+Route::get('/carrinho/contador', [CartController::class, 'getCount'])->name('cart.count');
+
+// Rotas de pedido
 Route::get('/pedido', [OrderController::class, 'create'])->name('order.create');
 Route::post('/pedido', [OrderController::class, 'store'])->name('order.store');
 Route::get('/pedido/sucesso/{id}', [OrderController::class, 'success'])->name('order.success');
