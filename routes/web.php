@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\SettingsController;
+use App\Http\Controllers\Admin\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\StockMovementController;
 use App\Http\Controllers\ManifestController;
@@ -43,6 +44,10 @@ Route::post('/logout', [\App\Http\Controllers\Auth\LoginController::class, 'logo
 // Rotas administrativas (protegidas por auth e role)
 Route::middleware(['auth', 'role:admin|gerente|vendedor'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    
+    // Perfil do usuário (todos os usuários autenticados podem acessar)
+    Route::get('profile', [ProfileController::class, 'show'])->name('profile.show');
+    Route::put('profile', [ProfileController::class, 'update'])->name('profile.update');
     
     Route::middleware(['role:admin|gerente'])->group(function () {
         Route::resource('products', ProductController::class);

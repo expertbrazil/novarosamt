@@ -122,7 +122,11 @@
                             </button>
 
                             <!-- Dropdown menu -->
-                            <div id="user-menu" class="absolute right-0 z-10 mt-2.5 w-32 origin-top-right rounded-md bg-white dark:bg-gray-800 py-2 shadow-lg ring-1 ring-gray-900/5 dark:ring-gray-700 focus:outline-none" role="menu" aria-orientation="vertical" aria-labelledby="user-menu-button" tabindex="-1" style="display: none;">
+                            <div id="user-menu" class="absolute right-0 z-10 mt-2.5 w-48 origin-top-right rounded-md bg-white dark:bg-gray-800 py-2 shadow-lg ring-1 ring-gray-900/5 dark:ring-gray-700 focus:outline-none" role="menu" aria-orientation="vertical" aria-labelledby="user-menu-button" tabindex="-1" style="display: none;">
+                                <a href="{{ route('admin.profile.show') }}" class="block px-3 py-1 text-sm leading-6 text-gray-900 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700" role="menuitem" tabindex="-1">
+                                    Meu Perfil
+                                </a>
+                                <div class="border-t border-gray-200 dark:border-gray-700 my-1"></div>
                                 <form action="{{ route('logout') }}" method="POST" class="block">
                                     @csrf
                                     <button type="submit" class="block w-full px-3 py-1 text-left text-sm leading-6 text-gray-900 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700" role="menuitem" tabindex="-1">Sair</button>
