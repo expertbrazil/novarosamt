@@ -36,6 +36,8 @@ class SettingsController extends Controller
             'orders_logo' => 'nullable|image|mimes:jpg,jpeg,png,svg|max:2048',
             'whatsapp_number' => 'nullable|string|max:20',
             'whatsapp_message' => 'nullable|string|max:500',
+            'payment_recipient_name' => 'nullable|string|max:255',
+            'payment_pix_key' => 'nullable|string|max:255',
             
             // Delivery Settings
             'company_address' => 'nullable|string|max:500',
@@ -103,6 +105,15 @@ class SettingsController extends Controller
                 return !empty($city['municipio_id']);
             });
             Settings::set('delivery_cities', json_encode(array_values($validCities)), 'json', 'Cidades onde é feita a entrega');
+        }
+
+        // Payment Data
+        if ($request->filled('payment_recipient_name')) {
+            Settings::set('payment_recipient_name', $request->payment_recipient_name, 'string', 'Nome do recebedor dos pagamentos');
+        }
+
+        if ($request->filled('payment_pix_key')) {
+            Settings::set('payment_pix_key', $request->payment_pix_key, 'string', 'Chave PIX para pagamentos');
         }
 
         // SMTP Settings

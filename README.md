@@ -36,6 +36,8 @@ APP_URL=http://localhost:9000
 docker-compose up -d --build
 ```
 
+Isso já sobe os serviços da aplicação, banco, Node e o Mailhog (servidor SMTP fake acessível em http://localhost:8025).
+
 ### 3. Instalar dependências do Composer
 
 ```bash
@@ -125,6 +127,31 @@ docker-compose logs -f db
 
 ```bash
 docker-compose down
+```
+
+### Mailhog (SMTP local de desenvolvimento)
+
+- Painel web: http://localhost:8025  
+- Porta SMTP exposta: 1025  
+- Logs em tempo real: `docker-compose logs -f mailhog`
+
+Configure o seu `.env` para usar o Mailhog:
+
+```env
+MAIL_MAILER=smtp
+MAIL_HOST=mailhog      # use 127.0.0.1 se estiver rodando Laravel fora dos containers
+MAIL_PORT=1025
+MAIL_USERNAME=null
+MAIL_PASSWORD=null
+MAIL_ENCRYPTION=null
+MAIL_FROM_ADDRESS=notificacoes@novarosamt.local
+MAIL_FROM_NAME="${APP_NAME}"
+```
+
+Após ajustar o `.env`, reinicie o container da aplicação para garantir que as novas variáveis sejam carregadas:
+
+```bash
+docker-compose restart app
 ```
 
 ## Acesso

@@ -33,6 +33,15 @@
     }
 </style>
 <div class="space-y-6">
+    @if(session('success'))
+        <div class="flex items-start space-x-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-900">
+            <svg class="h-5 w-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span>{{ session('success') }}</span>
+        </div>
+    @endif
+
     <!-- Header -->
     <div class="md:flex md:items-center md:justify-between">
         <div class="min-w-0 flex-1">
@@ -128,6 +137,13 @@
                                 <a href="mailto:{{ $order->customer_email }}" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300">
                                     {{ $order->customer_email }}
                                 </a>
+                            </dd>
+                        </div>
+                        @else
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Email</dt>
+                            <dd class="mt-1 text-sm text-amber-600 dark:text-amber-400">
+                                Cliente sem email cadastrado
                             </dd>
                         </div>
                         @endif
@@ -398,6 +414,18 @@
                     </h3>
                     
                     <div class="space-y-3">
+                        <form action="{{ route('admin.orders.sync-customer', $order) }}" method="POST" class="w-full">
+                            @csrf
+                            <button type="submit" 
+                                    {{ $order->customer_id ? '' : 'disabled' }}
+                                    class="inline-flex w-full items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white {{ $order->customer_id ? 'bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500 cursor-pointer' : 'bg-emerald-300 cursor-not-allowed opacity-70' }} focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors duration-200">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                </svg>
+                                {{ $order->customer_id ? 'Sincronizar dados do cliente' : 'Sem cliente vinculado' }}
+                            </button>
+                        </form>
+
                         @if($order->status === 'cancelado')
                         <form action="{{ route('admin.orders.reverse-stock', $order) }}" method="POST" class="w-full">
                             @csrf
@@ -410,6 +438,18 @@
                             </button>
                         </form>
                         @endif
+                        
+                        <form action="{{ route('admin.orders.send-email', $order) }}" method="POST" class="w-full">
+                            @csrf
+                            <button type="submit" 
+                                    {{ $order->customer_email ? '' : 'disabled' }}
+                                    class="inline-flex w-full items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white {{ $order->customer_email ? 'bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500 cursor-pointer' : 'bg-indigo-300 cursor-not-allowed opacity-70' }} focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors duração-200">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8m-18 8h18a2 2 0 002-2V8a2 2 0 00-2-2H3a2 2 0 00-2 2v6a2 2 0 002 2z"/>
+                                </svg>
+                                {{ $order->customer_email ? 'Enviar por Email' : 'Sem email cadastrado' }}
+                            </button>
+                        </form>
                         
                         <form action="{{ route('admin.orders.send-whatsapp', $order) }}" method="POST" class="w-full">
                             @csrf

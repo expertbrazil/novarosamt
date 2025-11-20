@@ -53,6 +53,16 @@ services:
     networks:
       - novarosamt-network
 
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    container_name: novarosamt_mailhog
+    restart: unless-stopped
+    ports:
+      - "${FORWARD_MAILHOG_SMTP_PORT:-1025}:1025"
+      - "${FORWARD_MAILHOG_HTTP_PORT:-8025}:8025"
+    networks:
+      - novarosamt-network
+
 volumes:
   db_data:
     driver: local

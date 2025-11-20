@@ -422,6 +422,62 @@
             </div>
         </div>
 
+        <!-- Dados para Pagamento -->
+        <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
+            <div class="px-4 py-5 sm:p-6">
+                <div class="border-b border-gray-200 dark:border-gray-700 pb-4 mb-4">
+                    <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-white">
+                        Dados para Pagamento
+                    </h3>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                        Informe quem irá receber e a chave Pix utilizada nos pedidos e comunicações.
+                    </p>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label for="payment_recipient_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Nome do Recebedor
+                        </label>
+                        <div class="mt-1">
+                            <input type="text"
+                                   name="payment_recipient_name"
+                                   id="payment_recipient_name"
+                                   value="{{ old('payment_recipient_name', $settings['payment_recipient_name'] ?? '') }}"
+                                   class="form-input @error('payment_recipient_name') border-red-300 focus:border-red-500 focus:ring-red-500 @enderror"
+                                   placeholder="Ex: Maria da Silva">
+                        </div>
+                        @error('payment_recipient_name')
+                            <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                        @enderror
+                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                            Esse nome pode ser exibido nos pedidos e emails para orientar quem realizará o pagamento.
+                        </p>
+                    </div>
+
+                    <div>
+                        <label for="payment_pix_key" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Chave PIX
+                        </label>
+                        <div class="mt-1">
+                            <input type="text"
+                                   name="payment_pix_key"
+                                   id="payment_pix_key"
+                                   value="{{ old('payment_pix_key', $settings['payment_pix_key'] ?? '') }}"
+                                   class="form-input @error('payment_pix_key') border-red-300 focus:border-red-500 focus:ring-red-500 @enderror"
+                                   placeholder="CPF, CNPJ, Email ou Chave Aleatória">
+                        </div>
+                        @error('payment_pix_key')
+                            <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                        @enderror
+                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                            Esta chave poderá ser usada para instruções de pagamento em PDF, email e WhatsApp.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- SMTP -->
         <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
             <div class="px-4 py-5 sm:p-6">

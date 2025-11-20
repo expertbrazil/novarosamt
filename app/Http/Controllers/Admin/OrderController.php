@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Mail\OrderInvoiceMail;
 use App\Models\Order;
 use App\Models\Category;
 use App\Models\Customer;
@@ -10,6 +11,7 @@ use App\Models\Product;
 use App\Services\OrderService;
 use App\Services\WhatsAppService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 
 class OrderController extends Controller
 {
@@ -282,6 +284,55 @@ class OrderController extends Controller
             return back()->withErrors(['error' => 'Erro ao enviar mensagem via WhatsApp. Verifique as configurações.']);
         } catch (\Exception $e) {
             return back()->withErrors(['error' => 'Erro ao enviar WhatsApp: ' . $e->getMessage()]);
+        }
+    }
+
+    public function sendEmail(Order $order)
+    {
+        try {
+            if (!$order->customer_email) {
+                return back()->withErrors(['error' => 'Este pedido não possui email de cliente cadastrado.']);
+            }
+
+            $order->load('items.product.category');
+
+            Mail::to($order->customer_email)
+                ->send(new OrderInvoiceMail($order));
+
+            return back()->with('success', 'Pedido enviado por email com sucesso!');
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => 'Erro ao enviar email: ' . $e->getMessage()]);
+        }
+    }
+
+    public function syncCustomer(Order $order)
+    {
+        try {
+            if (!$order->customer_id) {
+                return back()->withErrors(['error' => 'Não foi possível sincronizar: pedido não está vinculado a um cliente.']);
+            }
+
+            $customer = Customer::find($order->customer_id);
+
+            if (!$customer) {
+                return back()->withErrors(['error' => 'Cliente vinculado a este pedido não foi encontrado.']);
+            }
+
+            $personType = $customer->person_type ?? 'PF';
+            $document = $personType === 'PF' ? $customer->cpf : $customer->cnpj;
+            $address = $this->buildAddressString($customer);
+
+            $order->update([
+                'customer_name' => $customer->name,
+                'customer_email' => $customer->email,
+                'customer_phone' => $customer->phone,
+                'customer_cpf' => $document,
+                'customer_address' => $address,
+            ]);
+
+            return back()->with('success', 'Dados do cliente sincronizados com sucesso.');
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => 'Erro ao sincronizar dados do cliente: ' . $e->getMessage()]);
         }
     }
 
