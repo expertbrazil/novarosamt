@@ -77,7 +77,7 @@
     <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
         @if($categories->count() > 0)
             <!-- Desktop Table -->
-            <div class="desktop-categories-table overflow-x-auto" style="display: none;">
+            <div class="desktop-categories-table" style="display: none;">
                 <style>
                     @media (min-width: 768px) {
                         .desktop-categories-table {
@@ -85,116 +85,121 @@
                         }
                     }
                 </style>
-                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                    <thead class="bg-gray-50 dark:bg-gray-700">
-                        <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                Categoria
-                            </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                Slug
-                            </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                Status
-                            </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                Produtos
-                            </th>
-                            <th scope="col" class="relative px-6 py-3">
-                                <span class="sr-only">Ações</span>
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                        @foreach($categories as $category)
-                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200">
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-start">
-                                        <div class="flex-shrink-0 h-10 w-10">
-                                            <div class="h-10 w-10 rounded-lg bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center">
-                                                <svg class="h-6 w-6 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
-                                                </svg>
-                                            </div>
-                                        </div>
-                                        <div class="ml-3 min-w-0 flex-1">
-                                            <div class="text-sm font-medium text-gray-900 dark:text-white truncate">
-                                                {{ $category->name }}
-                                            </div>
-                                            @if($category->description)
-                                                <div class="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
-                                                    {{ $category->description }}
-                                                </div>
-                                            @endif
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-gray-500 dark:text-gray-400 font-mono truncate">
-                                        {{ $category->slug }}
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $category->is_active ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300' }}">
-                                        <svg class="w-1.5 h-1.5 mr-1.5 {{ $category->is_active ? 'text-green-400' : 'text-gray-400' }}" fill="currentColor" viewBox="0 0 8 8">
-                                            <circle cx="4" cy="4" r="3"/>
-                                        </svg>
-                                        {{ $category->is_active ? 'Ativa' : 'Inativa' }}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                    {{ $category->products_count ?? 0 }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <div class="flex items-center justify-end space-x-2">
-                                        <a href="{{ route('admin.categories.edit', $category) }}" 
-                                           class="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-blue-600 hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-100 shadow-sm transition-colors duration-200"
-                                           title="Editar categoria"
-                                           aria-label="Editar categoria">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                                            </svg>
-                                        </a>
-                                        
-                                        <form method="POST" action="{{ route('admin.categories.toggle', $category) }}" class="inline">
-                                            @csrf
-                                            <button type="submit" 
-                                                    class="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100 shadow-sm transition-colors duration-200"
-                                                    title="{{ $category->is_active ? 'Inativar' : 'Ativar' }} categoria"
-                                                    aria-label="{{ $category->is_active ? 'Inativar' : 'Ativar' }} categoria">
-                                                @if($category->is_active)
-                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728"/>
-                                                    </svg>
-                                                @else
-                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                                    </svg>
-                                                @endif
-                                            </button>
-                                        </form>
-                                        
-                                        <form method="POST" 
-                                              action="{{ route('admin.categories.destroy', $category) }}" 
-                                              class="inline"
-                                              onsubmit="return confirm('Tem certeza que deseja excluir esta categoria? Esta ação não pode ser desfeita.');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" 
-                                                    class="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-red-600 hover:text-red-900 dark:text-red-300 dark:hover:text-red-100 shadow-sm transition-colors duration-200"
-                                                    title="Excluir categoria"
-                                                    aria-label="Excluir categoria">
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                                </svg>
-                                            </button>
-                                        </form>
-                                    </div>
-                                </td>
+                <div class="overflow-x-auto">
+                    <table class="w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead class="bg-gray-50 dark:bg-gray-700">
+                            <tr>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-1/3">
+                                    Categoria
+                                </th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider hidden lg:table-cell">
+                                    Slug
+                                </th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-24">
+                                    Status
+                                </th>
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-20">
+                                    Produtos
+                                </th>
+                                <th scope="col" class="relative px-4 py-3 w-32">
+                                    <span class="sr-only">Ações</span>
+                                </th>
                             </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                            @foreach($categories as $category)
+                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200">
+                                    <td class="px-4 py-4">
+                                        <div class="flex items-start">
+                                            <div class="flex-shrink-0 h-10 w-10">
+                                                <div class="h-10 w-10 rounded-lg bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center">
+                                                    <svg class="h-6 w-6 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                                                    </svg>
+                                                </div>
+                                            </div>
+                                            <div class="ml-3 min-w-0 flex-1">
+                                                <div class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                                    {{ $category->name }}
+                                                </div>
+                                                <div class="text-xs text-gray-500 dark:text-gray-400 font-mono truncate lg:hidden mt-1">
+                                                    {{ $category->slug }}
+                                                </div>
+                                                @if($category->description)
+                                                    <div class="text-xs text-gray-500 dark:text-gray-400 line-clamp-1 mt-1">
+                                                        {{ $category->description }}
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-4 hidden lg:table-cell">
+                                        <div class="text-sm text-gray-500 dark:text-gray-400 font-mono truncate max-w-xs">
+                                            {{ $category->slug }}
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-4">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $category->is_active ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300' }}">
+                                            <svg class="w-1.5 h-1.5 mr-1.5 {{ $category->is_active ? 'text-green-400' : 'text-gray-400' }}" fill="currentColor" viewBox="0 0 8 8">
+                                                <circle cx="4" cy="4" r="3"/>
+                                            </svg>
+                                            {{ $category->is_active ? 'Ativa' : 'Inativa' }}
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-4 text-sm text-gray-500 dark:text-gray-400">
+                                        {{ $category->products_count ?? 0 }}
+                                    </td>
+                                    <td class="px-4 py-4 text-right text-sm font-medium">
+                                        <div class="flex items-center justify-end space-x-1">
+                                            <a href="{{ route('admin.categories.edit', $category) }}" 
+                                               class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-blue-600 hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-100 shadow-sm transition-colors duration-200"
+                                               title="Editar categoria"
+                                               aria-label="Editar categoria">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                                </svg>
+                                            </a>
+                                            
+                                            <form method="POST" action="{{ route('admin.categories.toggle', $category) }}" class="inline">
+                                                @csrf
+                                                <button type="submit" 
+                                                        class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100 shadow-sm transition-colors duration-200"
+                                                        title="{{ $category->is_active ? 'Inativar' : 'Ativar' }} categoria"
+                                                        aria-label="{{ $category->is_active ? 'Inativar' : 'Ativar' }} categoria">
+                                                    @if($category->is_active)
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728"/>
+                                                        </svg>
+                                                    @else
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                                        </svg>
+                                                    @endif
+                                                </button>
+                                            </form>
+                                            
+                                            <form method="POST" 
+                                                  action="{{ route('admin.categories.destroy', $category) }}" 
+                                                  class="inline"
+                                                  onsubmit="return confirm('Tem certeza que deseja excluir esta categoria? Esta ação não pode ser desfeita.');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" 
+                                                        class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-red-600 hover:text-red-900 dark:text-red-300 dark:hover:text-red-100 shadow-sm transition-colors duration-200"
+                                                        title="Excluir categoria"
+                                                        aria-label="Excluir categoria">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                    </svg>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             <!-- Mobile Cards -->
