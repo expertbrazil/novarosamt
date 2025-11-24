@@ -17,22 +17,26 @@
     <table>
         <thead>
             <tr>
+                <th>#</th>
                 <th>Produto</th>
-                <th>Qtd.</th>
-                <th>Estoque Atual</th>
-                <th>Estoque Mínimo</th>
+                <th>Quantidade</th>
             </tr>
         </thead>
         <tbody>
-            @foreach($purchaseOrder->items as $item)
+            @foreach($purchaseOrder->items as $index => $item)
                 <tr>
+                    <td>{{ $index + 1 }}</td>
                     <td>{{ $item->product->name }}</td>
                     <td>{{ $item->quantity }}</td>
-                    <td>{{ $item->product->stock }}</td>
-                    <td>{{ $item->product->min_stock ?? '—' }}</td>
                 </tr>
             @endforeach
         </tbody>
+        <tfoot>
+            <tr>
+                <th colspan="2" style="text-align: right;">Total de itens solicitados:</th>
+                <th>{{ $purchaseOrder->items->sum('quantity') }}</th>
+            </tr>
+        </tfoot>
     </table>
 
     @if($purchaseOrder->notes)

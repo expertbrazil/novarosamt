@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
+use App\Mail\PurchaseOrderMail;
 
 class PurchaseOrderController extends Controller
 {
@@ -174,15 +175,17 @@ class PurchaseOrderController extends Controller
             'supplier_email' => 'required|email',
         ]);
 
-        $purchaseOrder->load('items.product');
-
         try {
-            Mail::send('emails.purchase-orders.supplier', [
-                'purchaseOrder' => $purchaseOrder,
-            ], function ($message) use ($data, $purchaseOrder) {
-                $message->to($data['supplier_email'])
-                    ->subject('Pedido de Compra #' . $purchaseOrder->id);
-            });
+            $purchaseOrder->load('items.product');
+
+            Mail::to($data['supplier_email'])
+                ->send(new PurchaseOrderMail($purchaseOrder, $data['supplier_email']));
+
+            if ($purchaseOrder->status !== PurchaseOrder::STATUS_SENT) {
+                $purchaseOrder->update(['status' => PurchaseOrder::STATUS_SENT]);
+            }
+
+            return back()->with('success', 'Pedido enviado ao fornecedor com sucesso!');
         } catch (TransportExceptionInterface $exception) {
             Log::error('Erro ao enviar pedido de compra por e-mail', [
                 'purchase_order_id' => $purchaseOrder->id,
@@ -193,13 +196,17 @@ class PurchaseOrderController extends Controller
             return back()
                 ->withErrors(['email' => 'Não foi possível enviar o e-mail ('. $exception->getMessage() .'). Verifique a configuração do SMTP.'])
                 ->withInput();
-        }
+        } catch (\Exception $e) {
+            Log::error('Erro ao enviar pedido de compra por e-mail', [
+                'purchase_order_id' => $purchaseOrder->id,
+                'supplier_email' => $data['supplier_email'],
+                'exception' => $e->getMessage(),
+            ]);
 
-        if ($purchaseOrder->status !== PurchaseOrder::STATUS_SENT) {
-            $purchaseOrder->update(['status' => PurchaseOrder::STATUS_SENT]);
+            return back()
+                ->withErrors(['email' => 'Erro ao enviar email: ' . $e->getMessage()])
+                ->withInput();
         }
-
-        return back()->with('success', 'Pedido enviado ao fornecedor com sucesso!');
     }
 
     public function exportPdf(PurchaseOrder $purchaseOrder)
