@@ -40,10 +40,13 @@ class DatabaseSeeder extends Seeder
             'manage orders'
         ])->unique());
 
-        // Criar/obter usuário admin e garantir papel (idempotente)
-        $admin = User::firstOrCreate(
+        // Criar/atualizar usuário admin e garantir papel (idempotente, força senha conhecida)
+        $admin = User::updateOrCreate(
             ['email' => 'admin@novarosamt.com'],
-            ['name' => 'Administrador', 'password' => Hash::make('password')]
+            [
+                'name' => 'Administrador',
+                'password' => Hash::make(env('ADMIN_SEED_PASSWORD', 'password')),
+            ]
         );
         if (!$admin->hasRole('admin')) {
             $admin->assignRole($adminRole);

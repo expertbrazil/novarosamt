@@ -471,8 +471,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function addItem() {
         const index = repeater.children.length;
-        const clone = document.importNode(template, true);
-        const row = clone.querySelector('.bg-gray-50');
+        const fragment = document.importNode(template, true);
+        const row = fragment.querySelector('.bg-gray-50');
 
         row.querySelectorAll('input[name], select[name]').forEach(element => {
             if (element.name) {
@@ -480,8 +480,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        repeater.appendChild(clone);
-        bindItemRow(repeater.lastElementChild);
+        repeater.prepend(fragment);
+        bindItemRow(row);
     }
 
     document.getElementById('addItemBtn').addEventListener('click', addItem);
