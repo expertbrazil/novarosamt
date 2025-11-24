@@ -308,13 +308,26 @@ class BackupController extends Controller
                 if (file_exists($uploadsDir)) {
                     $targetUploadsPath = storage_path('app/public');
                     
+                    \Log::info('Restaurando arquivos de upload', [
+                        'source' => $uploadsDir,
+                        'target' => $targetUploadsPath
+                    ]);
+                    
                     // Criar diretório se não existir
                     if (!file_exists($targetUploadsPath)) {
                         mkdir($targetUploadsPath, 0755, true);
                     }
                     
+                    // Limpar pasta public antes de restaurar (opcional - pode comentar se quiser manter arquivos existentes)
+                    // Mas vamos limpar apenas o conteúdo, não a pasta inteira
+                    $this->deleteDirectoryContents($targetUploadsPath);
+                    
                     // Copiar arquivos
                     $this->copyDirectory($uploadsDir, $targetUploadsPath);
+                    
+                    \Log::info('Arquivos de upload restaurados com sucesso');
+                } else {
+                    \Log::warning('Diretório de uploads não encontrado no backup', ['path' => $uploadsDir]);
                 }
             } else {
                 // Arquivo SQL simples
@@ -491,6 +504,38 @@ class BackupController extends Controller
                 // Ignorar se o comando não existir
             }
             
+            // Garantir que o link simbólico do storage existe
+            try {
+                // Usar o comando do Laravel para criar o link simbólico
+                Artisan::call('storage:link');
+                \Log::info('Link simbólico do storage verificado/criado');
+            } catch (\Exception $e) {
+                \Log::warning('Não foi possível criar/verificar link simbólico do storage', ['error' => $e->getMessage()]);
+                
+                // Tentar criar manualmente se o comando falhar
+                try {
+                    $link = public_path('storage');
+                    $target = storage_path('app/public');
+                    
+                    if (file_exists($target)) {
+                        if (file_exists($link) && !is_link($link)) {
+                            // Se existir mas não for link, remover
+                            if (is_dir($link)) {
+                                rmdir($link);
+                            } else {
+                                unlink($link);
+                            }
+                        }
+                        if (!file_exists($link)) {
+                            symlink($target, $link);
+                            \Log::info('Link simbólico do storage criado manualmente', ['link' => $link, 'target' => $target]);
+                        }
+                    }
+                } catch (\Exception $e2) {
+                    \Log::error('Falha ao criar link simbólico manualmente', ['error' => $e2->getMessage()]);
+                }
+            }
+            
             // Limpar diretório temporário
             if ($tempDir && file_exists($tempDir)) {
                 $this->deleteDirectory($tempDir);
@@ -519,11 +564,18 @@ class BackupController extends Controller
 
     protected function copyDirectory($source, $destination)
     {
+        if (!file_exists($source)) {
+            \Log::warning('Diretório fonte não existe para cópia', ['source' => $source]);
+            return;
+        }
+        
         if (!file_exists($destination)) {
             mkdir($destination, 0755, true);
         }
         
         $files = scandir($source);
+        $copiedFiles = 0;
+        $copiedDirs = 0;
         
         foreach ($files as $file) {
             if ($file == '.' || $file == '..') {
@@ -538,10 +590,28 @@ class BackupController extends Controller
                     mkdir($destPath, 0755, true);
                 }
                 $this->copyDirectory($sourcePath, $destPath);
+                $copiedDirs++;
             } else {
-                copy($sourcePath, $destPath);
+                // Copiar arquivo e verificar se foi copiado corretamente
+                if (copy($sourcePath, $destPath)) {
+                    $copiedFiles++;
+                    // Garantir permissões corretas
+                    chmod($destPath, 0644);
+                } else {
+                    \Log::error('Falha ao copiar arquivo', [
+                        'source' => $sourcePath,
+                        'destination' => $destPath
+                    ]);
+                }
             }
         }
+        
+        \Log::info('Cópia de diretório concluída', [
+            'source' => $source,
+            'destination' => $destination,
+            'arquivos_copiados' => $copiedFiles,
+            'diretorios_copiados' => $copiedDirs
+        ]);
     }
 
     protected function deleteDirectory($dir)
@@ -562,6 +632,24 @@ class BackupController extends Controller
         }
         
         rmdir($dir);
+    }
+
+    protected function deleteDirectoryContents($dir)
+    {
+        if (!file_exists($dir)) {
+            return;
+        }
+        
+        $files = array_diff(scandir($dir), ['.', '..']);
+        
+        foreach ($files as $file) {
+            $filePath = $dir . '/' . $file;
+            if (is_dir($filePath)) {
+                $this->deleteDirectory($filePath);
+            } else {
+                unlink($filePath);
+            }
+        }
     }
 
     protected function escapeSqlValue($value)
