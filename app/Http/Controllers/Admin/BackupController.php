@@ -62,54 +62,82 @@ class BackupController extends Controller
             $dbName = config('database.connections.mysql.database');
             $tableKey = 'Tables_in_' . $dbName;
             
+            $exportedTables = [];
+            $exportedRows = 0;
+            
             foreach ($tables as $table) {
                 $tableName = $table->$tableKey;
+                $exportedTables[] = $tableName;
                 
-                // Incluir TODAS as tabelas, incluindo migrations, para garantir backup 100% idêntico
-                
-                // Exportar estrutura da tabela
-                fwrite($handle, "-- Estrutura da tabela `{$tableName}`\n");
-                fwrite($handle, "DROP TABLE IF EXISTS `{$tableName}`;\n");
-                
-                $createTable = DB::select("SHOW CREATE TABLE `{$tableName}`");
-                $createTableSql = $createTable[0]->{'Create Table'};
-                fwrite($handle, $createTableSql . ";\n\n");
-                
-                // Exportar dados da tabela
-                $rows = DB::table($tableName)->get();
-                
-                if ($rows->count() > 0) {
-                    fwrite($handle, "-- Dados da tabela `{$tableName}`\n");
+                try {
+                    // Exportar estrutura da tabela
+                    fwrite($handle, "-- ============================================\n");
+                    fwrite($handle, "-- Estrutura da tabela `{$tableName}`\n");
+                    fwrite($handle, "-- ============================================\n");
+                    fwrite($handle, "DROP TABLE IF EXISTS `{$tableName}`;\n");
                     
-                    // Preparar INSERT statements em lotes
-                    $chunkSize = 100;
-                    $rows->chunk($chunkSize)->each(function ($chunk) use ($handle, $tableName) {
-                        $columns = array_keys((array) $chunk->first());
-                        $columnList = '`' . implode('`, `', $columns) . '`';
+                    $createTable = DB::select("SHOW CREATE TABLE `{$tableName}`");
+                    if (empty($createTable)) {
+                        \Log::warning("Não foi possível obter estrutura da tabela: {$tableName}");
+                        continue;
+                    }
+                    
+                    $createTableSql = $createTable[0]->{'Create Table'};
+                    fwrite($handle, $createTableSql . ";\n\n");
+                    
+                    // Exportar dados da tabela
+                    $rows = DB::table($tableName)->get();
+                    $tableRowCount = $rows->count();
+                    
+                    if ($tableRowCount > 0) {
+                        fwrite($handle, "-- Dados da tabela `{$tableName}` ({$tableRowCount} registros)\n");
                         
-                        fwrite($handle, "INSERT INTO `{$tableName}` ({$columnList}) VALUES\n");
-                        
-                        $values = [];
-                        foreach ($chunk as $row) {
-                            $rowArray = (array) $row;
-                            $rowValues = [];
+                        // Preparar INSERT statements em lotes
+                        $chunkSize = 100;
+                        $rows->chunk($chunkSize)->each(function ($chunk) use ($handle, $tableName) {
+                            $columns = array_keys((array) $chunk->first());
+                            $columnList = '`' . implode('`, `', $columns) . '`';
                             
-                            foreach ($rowArray as $value) {
-                                if ($value === null) {
-                                    $rowValues[] = 'NULL';
-                                } else {
-                                    // escapeSqlValue já retorna o valor com aspas e escapado corretamente
-                                    $rowValues[] = $this->escapeSqlValue($value);
+                            fwrite($handle, "INSERT INTO `{$tableName}` ({$columnList}) VALUES\n");
+                            
+                            $values = [];
+                            foreach ($chunk as $row) {
+                                $rowArray = (array) $row;
+                                $rowValues = [];
+                                
+                                foreach ($rowArray as $value) {
+                                    if ($value === null) {
+                                        $rowValues[] = 'NULL';
+                                    } else {
+                                        // escapeSqlValue já retorna o valor com aspas e escapado corretamente
+                                        $rowValues[] = $this->escapeSqlValue($value);
+                                    }
                                 }
+                                
+                                $values[] = '(' . implode(', ', $rowValues) . ')';
                             }
                             
-                            $values[] = '(' . implode(', ', $rowValues) . ')';
-                        }
+                            fwrite($handle, implode(",\n", $values) . ";\n\n");
+                        });
                         
-                        fwrite($handle, implode(",\n", $values) . ";\n\n");
-                    });
+                        $exportedRows += $tableRowCount;
+                    } else {
+                        fwrite($handle, "-- Tabela `{$tableName}` está vazia\n\n");
+                    }
+                    
+                } catch (\Exception $e) {
+                    \Log::error("Erro ao exportar tabela {$tableName}: " . $e->getMessage());
+                    fwrite($handle, "-- ERRO ao exportar tabela `{$tableName}`: " . $e->getMessage() . "\n\n");
                 }
             }
+            
+            // Adicionar comentário final com resumo
+            fwrite($handle, "-- ============================================\n");
+            fwrite($handle, "-- Resumo do Backup\n");
+            fwrite($handle, "-- Tabelas exportadas: " . count($exportedTables) . "\n");
+            fwrite($handle, "-- Total de registros: {$exportedRows}\n");
+            fwrite($handle, "-- Tabelas: " . implode(', ', $exportedTables) . "\n");
+            fwrite($handle, "-- ============================================\n");
             
             // Finalizar backup SQL
             fwrite($handle, "COMMIT;\n");
@@ -312,6 +340,8 @@ class BackupController extends Controller
             $executedCount = 0;
             $failedCount = 0;
             $failedCommands = [];
+            $createdTables = [];
+            $insertedTables = [];
             
             foreach ($commands as $index => $command) {
                 $command = trim($command);
@@ -319,6 +349,14 @@ class BackupController extends Controller
                     try {
                         DB::unprepared($command);
                         $executedCount++;
+                        
+                        // Rastrear tabelas criadas e com dados inseridos
+                        if (preg_match('/CREATE\s+TABLE\s+`?(\w+)`?/i', $command, $matches)) {
+                            $createdTables[] = $matches[1];
+                        } elseif (preg_match('/INSERT\s+INTO\s+`?(\w+)`?/i', $command, $matches)) {
+                            $insertedTables[] = $matches[1];
+                        }
+                        
                     } catch (\Exception $e) {
                         $failedCount++;
                         $errorMsg = $e->getMessage();
@@ -332,7 +370,15 @@ class BackupController extends Controller
                                 $this->executeInsertWithBetterEscape($command);
                                 $executedCount++;
                                 $failedCount--;
-                                \Log::info('Comando INSERT restaurado com sucesso após tentativa de escape melhorado');
+                                
+                                $tableName = $this->extractTableName($command);
+                                if ($tableName !== 'unknown') {
+                                    $insertedTables[] = $tableName;
+                                }
+                                
+                                \Log::info('Comando INSERT restaurado com sucesso após tentativa de escape melhorado', [
+                                    'table' => $tableName
+                                ]);
                             } catch (\Exception $e2) {
                                 // Se ainda falhar, logar mas continuar
                                 $tableName = $this->extractTableName($command);
@@ -341,7 +387,7 @@ class BackupController extends Controller
                                     'error' => $e2->getMessage(),
                                     'preview' => substr($command, 0, 200)
                                 ];
-                                \Log::warning('Falha ao restaurar comando INSERT', [
+                                \Log::error('Falha ao restaurar comando INSERT', [
                                     'table' => $tableName,
                                     'error' => $e2->getMessage(),
                                     'command_preview' => substr($command, 0, 200)
@@ -361,14 +407,16 @@ class BackupController extends Controller
                             \Log::debug('DROP TABLE ignorado (tabela não existe)', ['command_preview' => substr($command, 0, 100)]);
                         } else {
                             // Para outros erros críticos, logar mas continuar
+                            $tableName = $this->extractTableName($command);
                             $failedCommands[] = [
-                                'table' => $this->extractTableName($command),
+                                'table' => $tableName,
                                 'error' => $errorMsg,
                                 'preview' => substr($command, 0, 200)
                             ];
-                            \Log::warning('Erro ao executar comando SQL durante restauração', [
+                            \Log::error('Erro ao executar comando SQL durante restauração', [
                                 'error' => $errorMsg,
                                 'command_type' => $this->getCommandType($command),
+                                'table' => $tableName,
                                 'command_preview' => substr($command, 0, 200)
                             ]);
                         }
@@ -376,20 +424,35 @@ class BackupController extends Controller
                 }
             }
             
+            // Verificar se todas as tabelas foram criadas corretamente
+            $allTables = DB::select('SHOW TABLES');
+            $dbName = config('database.connections.mysql.database');
+            $tableKey = 'Tables_in_' . $dbName;
+            $restoredTables = array_map(function($table) use ($tableKey) {
+                return $table->$tableKey;
+            }, $allTables);
+            
             // Log do resumo da restauração
             \Log::info('Restauração concluída', [
                 'executados' => $executedCount,
                 'falhados' => $failedCount,
-                'total' => count($commands)
+                'total' => count($commands),
+                'tabelas_criadas' => count(array_unique($createdTables)),
+                'tabelas_com_dados' => count(array_unique($insertedTables)),
+                'tabelas_restauradas' => count($restoredTables)
             ]);
             
-            // Se muitos comandos falharam, avisar mas não bloquear
-            if ($failedCount > 0 && $failedCount > count($commands) * 0.1) {
-                \Log::warning('Muitos comandos falharam durante a restauração', [
-                    'falhados' => $failedCount,
-                    'total' => count($commands),
-                    'percentual' => ($failedCount / count($commands)) * 100
-                ]);
+            // Se muitos comandos falharam, lançar exceção
+            if ($failedCount > 0 && $failedCount > count($commands) * 0.05) {
+                $errorMessage = "Muitos comandos falharam durante a restauração ({$failedCount} de " . count($commands) . "). ";
+                $errorMessage .= "Tabelas criadas: " . count(array_unique($createdTables)) . ". ";
+                $errorMessage .= "Tabelas restauradas: " . count($restoredTables) . ".";
+                
+                if (!empty($failedCommands)) {
+                    $errorMessage .= " Erros: " . json_encode(array_slice($failedCommands, 0, 5));
+                }
+                
+                throw new \Exception($errorMessage);
             }
             
             // Commit da transação
@@ -541,10 +604,9 @@ class BackupController extends Controller
         for ($i = 0; $i < $len; $i++) {
             $char = $sql[$i];
             $prevChar = $i > 0 ? $sql[$i - 1] : '';
-            $nextChar = $i < $len - 1 ? $sql[$i + 1] : '';
             
-            // Tratar escape
-            if ($char === '\\' && !$escapeNext) {
+            // Tratar escape (mas não se já estivermos escapando)
+            if ($char === '\\' && !$escapeNext && $inString) {
                 $escapeNext = true;
                 $currentCommand .= $char;
                 continue;
@@ -562,13 +624,17 @@ class BackupController extends Controller
             }
             
             $currentCommand .= $char;
-            $escapeNext = false;
+            
+            // Reset escape flag após processar o caractere
+            if ($escapeNext) {
+                $escapeNext = false;
+            }
             
             // Se encontrar ponto e vírgula fora de string, é fim de comando
-            if ($char === ';' && !$inString && !$escapeNext) {
+            if ($char === ';' && !$inString) {
                 $command = trim($currentCommand);
                 // Incluir TODOS os comandos, exceto SET de controle que já executamos
-                if (!empty($command) && 
+                if (!empty($command) && strlen($command) > 5 &&
                     !preg_match('/^(SET FOREIGN_KEY_CHECKS|SET SQL_MODE|SET AUTOCOMMIT|SET time_zone|START TRANSACTION|COMMIT)/i', trim($command))) {
                     $commands[] = $command;
                 }
@@ -578,7 +644,7 @@ class BackupController extends Controller
         
         // Adicionar último comando se houver
         $command = trim($currentCommand);
-        if (!empty($command) && 
+        if (!empty($command) && strlen($command) > 5 &&
             !preg_match('/^(SET FOREIGN_KEY_CHECKS|SET SQL_MODE|SET AUTOCOMMIT|SET time_zone|START TRANSACTION|COMMIT)/i', trim($command))) {
             $commands[] = $command;
         }
