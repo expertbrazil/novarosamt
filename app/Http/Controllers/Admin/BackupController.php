@@ -34,11 +34,14 @@ class BackupController extends Controller
     public function create()
     {
         try {
-            $filename = 'backup_' . date('Y-m-d_His') . '.sql';
-            $filepath = $this->backupPath . '/' . $filename;
+            $backupName = 'backup_' . date('Y-m-d_His');
+            $sqlFilename = $backupName . '.sql';
+            $zipFilename = $backupName . '.zip';
+            $sqlFilepath = $this->backupPath . '/' . $sqlFilename;
+            $zipFilepath = $this->backupPath . '/' . $zipFilename;
             
-            // Criar arquivo de backup
-            $handle = fopen($filepath, 'w');
+            // Criar arquivo SQL de backup
+            $handle = fopen($sqlFilepath, 'w');
             
             if (!$handle) {
                 throw new \Exception('Não foi possível criar o arquivo de backup.');
@@ -105,19 +108,46 @@ class BackupController extends Controller
                 }
             }
             
-            // Finalizar backup
+            // Finalizar backup SQL
             fwrite($handle, "COMMIT;\n");
             fwrite($handle, "SET FOREIGN_KEY_CHECKS=1;\n");
             
             fclose($handle);
             
-            // Verificar se o arquivo foi criado e tem conteúdo
-            if (!file_exists($filepath) || filesize($filepath) == 0) {
-                throw new \Exception('Backup criado mas está vazio ou não foi criado.');
+            // Verificar se o arquivo SQL foi criado
+            if (!file_exists($sqlFilepath) || filesize($sqlFilepath) == 0) {
+                throw new \Exception('Backup SQL criado mas está vazio ou não foi criado.');
+            }
+            
+            // Criar arquivo ZIP com banco de dados e arquivos de upload
+            $zip = new \ZipArchive();
+            if ($zip->open($zipFilepath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== TRUE) {
+                throw new \Exception('Não foi possível criar o arquivo ZIP.');
+            }
+            
+            // Adicionar arquivo SQL ao ZIP
+            $zip->addFile($sqlFilepath, 'database.sql');
+            
+            // Adicionar pasta de uploads (storage/app/public)
+            $uploadsPath = storage_path('app/public');
+            if (file_exists($uploadsPath)) {
+                $this->addDirectoryToZip($zip, $uploadsPath, 'uploads');
+            }
+            
+            $zip->close();
+            
+            // Remover arquivo SQL temporário (já está no ZIP)
+            if (file_exists($sqlFilepath)) {
+                unlink($sqlFilepath);
+            }
+            
+            // Verificar se o arquivo ZIP foi criado
+            if (!file_exists($zipFilepath) || filesize($zipFilepath) == 0) {
+                throw new \Exception('Backup ZIP criado mas está vazio ou não foi criado.');
             }
             
             return redirect()->route('admin.backups.index')
-                ->with('success', 'Backup criado com sucesso!');
+                ->with('success', 'Backup completo criado com sucesso! (Banco de dados + Arquivos de upload)');
                 
         } catch (\Exception $e) {
             return redirect()->route('admin.backups.index')
@@ -136,10 +166,31 @@ class BackupController extends Controller
         return response()->download($filepath);
     }
 
+    protected function addDirectoryToZip($zip, $dir, $zipPath = '')
+    {
+        $files = scandir($dir);
+        
+        foreach ($files as $file) {
+            if ($file == '.' || $file == '..') {
+                continue;
+            }
+            
+            $filePath = $dir . '/' . $file;
+            $zipFilePath = $zipPath ? $zipPath . '/' . $file : $file;
+            
+            if (is_dir($filePath)) {
+                $zip->addEmptyDir($zipFilePath);
+                $this->addDirectoryToZip($zip, $filePath, $zipFilePath);
+            } else {
+                $zip->addFile($filePath, $zipFilePath);
+            }
+        }
+    }
+
     public function upload(Request $request)
     {
         $request->validate([
-            'backup_file' => 'required|file|mimes:sql,txt|max:102400', // 100MB max
+            'backup_file' => 'required|file|mimes:sql,txt,zip|max:102400', // 100MB max
         ]);
         
         try {
@@ -184,10 +235,55 @@ class BackupController extends Controller
                     ->with('error', 'Arquivo de backup não encontrado.');
             }
             
-            // Ler o arquivo SQL
-            $sql = file_get_contents($filepath);
+            $isZip = pathinfo($filepath, PATHINFO_EXTENSION) === 'zip';
+            $sqlContent = null;
+            $tempDir = null;
             
-            if (empty($sql)) {
+            if ($isZip) {
+                // Extrair arquivo ZIP
+                $tempDir = $this->backupPath . '/temp_' . uniqid();
+                mkdir($tempDir, 0755, true);
+                
+                $zip = new \ZipArchive();
+                if ($zip->open($filepath) !== TRUE) {
+                    throw new \Exception('Não foi possível abrir o arquivo ZIP.');
+                }
+                
+                $zip->extractTo($tempDir);
+                $zip->close();
+                
+                // Procurar arquivo SQL no ZIP
+                $sqlFile = $tempDir . '/database.sql';
+                if (!file_exists($sqlFile)) {
+                    // Tentar encontrar qualquer arquivo .sql
+                    $files = glob($tempDir . '/*.sql');
+                    if (empty($files)) {
+                        throw new \Exception('Arquivo SQL não encontrado no backup ZIP.');
+                    }
+                    $sqlFile = $files[0];
+                }
+                
+                $sqlContent = file_get_contents($sqlFile);
+                
+                // Restaurar arquivos de upload
+                $uploadsDir = $tempDir . '/uploads';
+                if (file_exists($uploadsDir)) {
+                    $targetUploadsPath = storage_path('app/public');
+                    
+                    // Criar diretório se não existir
+                    if (!file_exists($targetUploadsPath)) {
+                        mkdir($targetUploadsPath, 0755, true);
+                    }
+                    
+                    // Copiar arquivos
+                    $this->copyDirectory($uploadsDir, $targetUploadsPath);
+                }
+            } else {
+                // Arquivo SQL simples
+                $sqlContent = file_get_contents($filepath);
+            }
+            
+            if (empty($sqlContent)) {
                 throw new \Exception('Arquivo de backup está vazio.');
             }
             
@@ -196,7 +292,7 @@ class BackupController extends Controller
             
             // Dividir o SQL em comandos individuais
             // Remover comentários e dividir por ponto e vírgula
-            $sql = preg_replace('/--.*$/m', '', $sql); // Remove comentários de linha
+            $sql = preg_replace('/--.*$/m', '', $sqlContent); // Remove comentários de linha
             $sql = preg_replace('/\/\*.*?\*\//s', '', $sql); // Remove comentários de bloco
             
             // Dividir em comandos
@@ -225,8 +321,13 @@ class BackupController extends Controller
             // Reabilitar verificação de chaves estrangeiras
             DB::statement('SET FOREIGN_KEY_CHECKS=1');
             
+            // Limpar diretório temporário
+            if ($tempDir && file_exists($tempDir)) {
+                $this->deleteDirectory($tempDir);
+            }
+            
             return redirect()->route('admin.backups.index')
-                ->with('success', 'Backup restaurado com sucesso!');
+                ->with('success', 'Backup restaurado com sucesso! (Banco de dados + Arquivos de upload)');
                 
         } catch (\Exception $e) {
             // Reabilitar verificação de chaves estrangeiras em caso de erro
@@ -236,9 +337,61 @@ class BackupController extends Controller
                 // Ignorar
             }
             
+            // Limpar diretório temporário em caso de erro
+            if (isset($tempDir) && $tempDir && file_exists($tempDir)) {
+                $this->deleteDirectory($tempDir);
+            }
+            
             return redirect()->route('admin.backups.index')
                 ->with('error', 'Erro ao restaurar backup: ' . $e->getMessage());
         }
+    }
+
+    protected function copyDirectory($source, $destination)
+    {
+        if (!file_exists($destination)) {
+            mkdir($destination, 0755, true);
+        }
+        
+        $files = scandir($source);
+        
+        foreach ($files as $file) {
+            if ($file == '.' || $file == '..') {
+                continue;
+            }
+            
+            $sourcePath = $source . '/' . $file;
+            $destPath = $destination . '/' . $file;
+            
+            if (is_dir($sourcePath)) {
+                if (!file_exists($destPath)) {
+                    mkdir($destPath, 0755, true);
+                }
+                $this->copyDirectory($sourcePath, $destPath);
+            } else {
+                copy($sourcePath, $destPath);
+            }
+        }
+    }
+
+    protected function deleteDirectory($dir)
+    {
+        if (!file_exists($dir)) {
+            return;
+        }
+        
+        $files = array_diff(scandir($dir), ['.', '..']);
+        
+        foreach ($files as $file) {
+            $filePath = $dir . '/' . $file;
+            if (is_dir($filePath)) {
+                $this->deleteDirectory($filePath);
+            } else {
+                unlink($filePath);
+            }
+        }
+        
+        rmdir($dir);
     }
 
     public function destroy($filename)
@@ -265,7 +418,10 @@ class BackupController extends Controller
     protected function getBackups()
     {
         $backups = [];
-        $files = glob($this->backupPath . '/*.sql');
+        // Buscar arquivos .sql e .zip
+        $sqlFiles = glob($this->backupPath . '/*.sql');
+        $zipFiles = glob($this->backupPath . '/*.zip');
+        $files = array_merge($sqlFiles, $zipFiles);
         
         foreach ($files as $file) {
             $backups[] = [
@@ -273,6 +429,7 @@ class BackupController extends Controller
                 'size' => filesize($file),
                 'created_at' => filemtime($file),
                 'path' => $file,
+                'type' => pathinfo($file, PATHINFO_EXTENSION) === 'zip' ? 'zip' : 'sql',
             ];
         }
         
