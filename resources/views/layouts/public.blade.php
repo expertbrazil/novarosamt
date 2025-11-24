@@ -7,6 +7,18 @@
     <meta name="keywords" content="produtos de limpeza, limpeza profissional, detergentes, desinfetantes, Nova Rosa MT">
     <title>{{ $title ?? 'Portal de Produtos de Limpeza - Nova Rosa MT' }}</title>
     
+    <!-- Google Analytics (GA4) -->
+    @if(isset($settings['google_analytics_id']) && !empty($settings['google_analytics_id']))
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{ $settings['google_analytics_id'] }}"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', '{{ $settings['google_analytics_id'] }}');
+    </script>
+    @endif
+    
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}?v={{ time() }}">
     @if(file_exists(public_path('favicon-32x32.png')))
@@ -268,17 +280,6 @@
             });
         });
     </script>
-
-    <!-- Google Analytics -->
-    @if(isset($settings['google_analytics_id']) && !empty($settings['google_analytics_id']))
-    <script async src="https://www.googletagmanager.com/gtag/js?id={{ $settings['google_analytics_id'] }}"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', '{{ $settings['google_analytics_id'] }}');
-    </script>
-    @endif
 </body>
 </html>
 
