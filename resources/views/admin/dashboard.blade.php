@@ -239,9 +239,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const topProducts = @json($topProducts->take(10));
     const isDark = document.documentElement.classList.contains('dark');
     
-    // Cores adaptáveis ao tema
+    // Cores adaptáveis ao tema - com maior contraste
     const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
-    const textColor = isDark ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)';
+    const textColor = isDark ? '#ffffff' : '#1f2937';
     const borderColor = isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)';
     
     // Gradiente para as barras
@@ -313,7 +313,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             return value.toLocaleString('pt-BR');
                         },
                         font: {
-                            size: 11
+                            size: 12,
+                            weight: '500'
                         }
                     }
                 },
@@ -327,7 +328,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         maxRotation: 45,
                         minRotation: 45,
                         font: {
-                            size: 10
+                            size: 11,
+                            weight: '500'
                         }
                     }
                 }
