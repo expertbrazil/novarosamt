@@ -478,6 +478,43 @@
             </div>
         </div>
 
+        <!-- Google Analytics -->
+        <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
+            <div class="px-4 py-5 sm:p-6">
+                <div class="border-b border-gray-200 dark:border-gray-700 pb-4 mb-4">
+                    <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-white">
+                        Google Analytics
+                    </h3>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                        Configure o Google Analytics para monitorar os acessos dos clientes
+                    </p>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label for="google_analytics_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            ID de Medição (Measurement ID)
+                        </label>
+                        <div class="mt-1">
+                            <input type="text" 
+                                   name="google_analytics_id" 
+                                   id="google_analytics_id"
+                                   value="{{ old('google_analytics_id', $settings['google_analytics_id'] ?? '') }}" 
+                                   class="form-input @error('google_analytics_id') border-red-300 focus:border-red-500 focus:ring-red-500 @enderror" 
+                                   placeholder="G-XXXXXXXXXX">
+                        </div>
+                        @error('google_analytics_id')
+                            <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                        @enderror
+                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                            Informe o ID de medição do Google Analytics 4 (formato: G-XXXXXXXXXX). 
+                            Você pode encontrar este ID em: Admin → Propriedades → Informações da propriedade → ID de medição.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- SMTP -->
         <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
             <div class="px-4 py-5 sm:p-6">

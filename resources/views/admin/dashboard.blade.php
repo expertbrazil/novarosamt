@@ -203,5 +203,111 @@
         </div>
     @endif
 </div>
+
+<!-- Produtos Mais Vendidos -->
+<div class="mt-6 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+    <div class="px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Produtos Mais Vendidos (Últimos 30 dias)</h3>
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Ranking dos produtos com maior volume de vendas
+        </p>
+    </div>
+    
+    <div class="px-4 sm:px-6 py-6">
+        @if($topProducts->count() > 0)
+            <div class="mb-6">
+                <canvas id="topProductsChart" height="100"></canvas>
+            </div>
+            
+            <div class="mt-6 space-y-3">
+                @foreach($topProducts->take(5) as $index => $product)
+                    <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
+                        <div class="flex items-center space-x-3">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center text-sm font-semibold text-indigo-600 dark:text-indigo-300">
+                                {{ $index + 1 }}
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                    {{ $product['name'] }}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <span class="text-sm font-semibold text-gray-900 dark:text-white">
+                                {{ number_format($product['quantity'], 0, ',', '.') }} un.
+                            </span>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        @else
+            <div class="text-center py-12 text-gray-500 dark:text-gray-400">
+                <svg class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>
+                <p class="mt-2 text-sm">Nenhum produto vendido nos últimos 30 dias</p>
+            </div>
+        @endif
+    </div>
+</div>
+
+@if($topProducts->count() > 0)
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('topProductsChart');
+    if (!ctx) return;
+
+    const topProducts = @json($topProducts->take(10));
+    
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: topProducts.map(p => p.name.length > 20 ? p.name.substring(0, 20) + '...' : p.name),
+            datasets: [{
+                label: 'Quantidade Vendida',
+                data: topProducts.map(p => p.quantity),
+                backgroundColor: 'rgba(99, 102, 241, 0.6)',
+                borderColor: 'rgba(99, 102, 241, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return 'Quantidade: ' + context.parsed.y.toLocaleString('pt-BR') + ' unidades';
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1,
+                        callback: function(value) {
+                            return value.toLocaleString('pt-BR');
+                        }
+                    }
+                },
+                x: {
+                    ticks: {
+                        maxRotation: 45,
+                        minRotation: 45
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+@endif
 @endsection
 

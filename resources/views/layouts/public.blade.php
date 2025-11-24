@@ -268,6 +268,17 @@
             });
         });
     </script>
+
+    <!-- Google Analytics -->
+    @if(isset($settings['google_analytics_id']) && !empty($settings['google_analytics_id']))
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{ $settings['google_analytics_id'] }}"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', '{{ $settings['google_analytics_id'] }}');
+    </script>
+    @endif
 </body>
 </html>
 

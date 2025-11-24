@@ -54,6 +54,9 @@ class SettingsController extends Controller
             'smtp_encryption' => 'nullable|string|in:tls,ssl',
             'smtp_from_address' => 'nullable|email|max:255',
             'smtp_from_name' => 'nullable|string|max:255',
+            
+            // Google Analytics
+            'google_analytics_id' => 'nullable|string|max:50',
         ]);
 
         // Handle logo upload
@@ -132,6 +135,13 @@ class SettingsController extends Controller
                 $type = ($field === 'smtp_port') ? 'integer' : 'string';
                 Settings::set($field, $request->input($field), $type, $description);
             }
+        }
+
+        // Google Analytics
+        if ($request->filled('google_analytics_id')) {
+            Settings::set('google_analytics_id', $request->google_analytics_id, 'string', 'ID de medição do Google Analytics (G-XXXXXXXXXX)');
+        } else {
+            Settings::set('google_analytics_id', '', 'string', 'ID de medição do Google Analytics (G-XXXXXXXXXX)');
         }
 
         return redirect()->route('admin.settings.index')
