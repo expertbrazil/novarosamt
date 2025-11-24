@@ -215,30 +215,8 @@
     
     <div class="px-4 sm:px-6 py-6">
         @if($topProducts->count() > 0)
-            <div class="mb-6">
-                <canvas id="topProductsChart" height="100"></canvas>
-            </div>
-            
-            <div class="mt-6 space-y-3">
-                @foreach($topProducts->take(5) as $index => $product)
-                    <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
-                        <div class="flex items-center space-x-3">
-                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center text-sm font-semibold text-indigo-600 dark:text-indigo-300">
-                                {{ $index + 1 }}
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
-                                    {{ $product['name'] }}
-                                </p>
-                            </div>
-                        </div>
-                        <div class="flex-shrink-0">
-                            <span class="text-sm font-semibold text-gray-900 dark:text-white">
-                                {{ number_format($product['quantity'], 0, ',', '.') }} un.
-                            </span>
-                        </div>
-                    </div>
-                @endforeach
+            <div style="height: 400px; position: relative;">
+                <canvas id="topProductsChart"></canvas>
             </div>
         @else
             <div class="text-center py-12 text-gray-500 dark:text-gray-400">
@@ -259,28 +237,62 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!ctx) return;
 
     const topProducts = @json($topProducts->take(10));
+    const isDark = document.documentElement.classList.contains('dark');
+    
+    // Cores adaptáveis ao tema
+    const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+    const textColor = isDark ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)';
+    const borderColor = isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)';
+    
+    // Gradiente para as barras
+    const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 400);
+    gradient.addColorStop(0, 'rgba(99, 102, 241, 0.8)');
+    gradient.addColorStop(1, 'rgba(99, 102, 241, 0.3)');
     
     new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: topProducts.map(p => p.name.length > 20 ? p.name.substring(0, 20) + '...' : p.name),
+            labels: topProducts.map(p => {
+                // Truncar nomes longos mas manter mais caracteres
+                return p.name.length > 25 ? p.name.substring(0, 25) + '...' : p.name;
+            }),
             datasets: [{
                 label: 'Quantidade Vendida',
                 data: topProducts.map(p => p.quantity),
-                backgroundColor: 'rgba(99, 102, 241, 0.6)',
+                backgroundColor: gradient,
                 borderColor: 'rgba(99, 102, 241, 1)',
-                borderWidth: 1
+                borderWidth: 2,
+                borderRadius: 6,
+                borderSkipped: false,
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            layout: {
+                padding: {
+                    top: 10,
+                    bottom: 10,
+                    left: 10,
+                    right: 10
+                }
+            },
             plugins: {
                 legend: {
                     display: false
                 },
                 tooltip: {
+                    backgroundColor: isDark ? 'rgba(31, 41, 55, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+                    titleColor: isDark ? 'rgba(255, 255, 255, 0.9)' : 'rgba(0, 0, 0, 0.9)',
+                    bodyColor: isDark ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.8)',
+                    borderColor: borderColor,
+                    borderWidth: 1,
+                    padding: 12,
+                    displayColors: false,
                     callbacks: {
+                        title: function(context) {
+                            return topProducts[context[0].dataIndex].name;
+                        },
                         label: function(context) {
                             return 'Quantidade: ' + context.parsed.y.toLocaleString('pt-BR') + ' unidades';
                         }
@@ -290,17 +302,33 @@ document.addEventListener('DOMContentLoaded', function() {
             scales: {
                 y: {
                     beginAtZero: true,
+                    grid: {
+                        color: gridColor,
+                        drawBorder: false,
+                    },
                     ticks: {
+                        color: textColor,
                         stepSize: 1,
                         callback: function(value) {
                             return value.toLocaleString('pt-BR');
+                        },
+                        font: {
+                            size: 11
                         }
                     }
                 },
                 x: {
+                    grid: {
+                        display: false,
+                        drawBorder: false,
+                    },
                     ticks: {
+                        color: textColor,
                         maxRotation: 45,
-                        minRotation: 45
+                        minRotation: 45,
+                        font: {
+                            size: 10
+                        }
                     }
                 }
             }
