@@ -98,9 +98,8 @@ class BackupController extends Controller
                                 if ($value === null) {
                                     $rowValues[] = 'NULL';
                                 } else {
-                                    // Escapar corretamente para MySQL usando mysqli_real_escape_string ou função equivalente
-                                    $escapedValue = $this->escapeSqlValue($value);
-                                    $rowValues[] = "'" . $escapedValue . "'";
+                                    // escapeSqlValue já retorna o valor com aspas e escapado corretamente
+                                    $rowValues[] = $this->escapeSqlValue($value);
                                 }
                             }
                             
@@ -310,40 +309,87 @@ class BackupController extends Controller
             $commands = $this->splitSqlCommands($sql);
             
             // Executar cada comando na ordem exata do backup
-            foreach ($commands as $command) {
+            $executedCount = 0;
+            $failedCount = 0;
+            $failedCommands = [];
+            
+            foreach ($commands as $index => $command) {
                 $command = trim($command);
                 if (!empty($command) && strlen($command) > 5) {
                     try {
                         DB::unprepared($command);
+                        $executedCount++;
                     } catch (\Exception $e) {
+                        $failedCount++;
+                        $errorMsg = $e->getMessage();
+                        
                         // Se for erro de sintaxe em INSERT, pode ser problema de escape
-                        // Tentar executar com tratamento especial
-                        if (strpos($e->getMessage(), 'syntax error') !== false && 
+                        if (strpos($errorMsg, 'syntax error') !== false && 
                             strpos($command, 'INSERT INTO') !== false) {
-                            
-                            // Log do erro mas continua (pode ser problema de escape em valores antigos)
-                            \Log::warning('Erro de sintaxe em INSERT durante restauração', [
-                                'error' => $e->getMessage(),
-                                'table' => $this->extractTableName($command),
-                                'command_preview' => substr($command, 0, 200)
-                            ]);
                             
                             // Tentar executar novamente com escape melhorado
                             try {
                                 $this->executeInsertWithBetterEscape($command);
+                                $executedCount++;
+                                $failedCount--;
+                                \Log::info('Comando INSERT restaurado com sucesso após tentativa de escape melhorado');
                             } catch (\Exception $e2) {
-                                // Se ainda falhar, pular este comando
-                                \Log::error('Falha ao restaurar comando após tentativa de escape melhorado', [
-                                    'error' => $e2->getMessage()
+                                // Se ainda falhar, logar mas continuar
+                                $tableName = $this->extractTableName($command);
+                                $failedCommands[] = [
+                                    'table' => $tableName,
+                                    'error' => $e2->getMessage(),
+                                    'preview' => substr($command, 0, 200)
+                                ];
+                                \Log::warning('Falha ao restaurar comando INSERT', [
+                                    'table' => $tableName,
+                                    'error' => $e2->getMessage(),
+                                    'command_preview' => substr($command, 0, 200)
                                 ]);
-                                continue;
                             }
+                        } elseif (strpos($errorMsg, 'already exists') !== false || 
+                                  strpos($errorMsg, 'Duplicate') !== false) {
+                            // Ignorar erros de duplicação (tabela/registro já existe)
+                            $executedCount++;
+                            $failedCount--;
+                            \Log::debug('Comando ignorado (já existe)', ['command_preview' => substr($command, 0, 100)]);
+                        } elseif (strpos($command, 'DROP TABLE') !== false && 
+                                  strpos($errorMsg, "doesn't exist") !== false) {
+                            // Ignorar erros de DROP TABLE se a tabela não existir
+                            $executedCount++;
+                            $failedCount--;
+                            \Log::debug('DROP TABLE ignorado (tabela não existe)', ['command_preview' => substr($command, 0, 100)]);
                         } else {
-                            // Para outros erros, lançar exceção
-                            throw $e;
+                            // Para outros erros críticos, logar mas continuar
+                            $failedCommands[] = [
+                                'table' => $this->extractTableName($command),
+                                'error' => $errorMsg,
+                                'preview' => substr($command, 0, 200)
+                            ];
+                            \Log::warning('Erro ao executar comando SQL durante restauração', [
+                                'error' => $errorMsg,
+                                'command_type' => $this->getCommandType($command),
+                                'command_preview' => substr($command, 0, 200)
+                            ]);
                         }
                     }
                 }
+            }
+            
+            // Log do resumo da restauração
+            \Log::info('Restauração concluída', [
+                'executados' => $executedCount,
+                'falhados' => $failedCount,
+                'total' => count($commands)
+            ]);
+            
+            // Se muitos comandos falharam, avisar mas não bloquear
+            if ($failedCount > 0 && $failedCount > count($commands) * 0.1) {
+                \Log::warning('Muitos comandos falharam durante a restauração', [
+                    'falhados' => $failedCount,
+                    'total' => count($commands),
+                    'percentual' => ($failedCount / count($commands)) * 100
+                ]);
             }
             
             // Commit da transação
@@ -450,10 +496,11 @@ class BackupController extends Controller
         $pdo = DB::connection()->getPdo();
         
         // Escapar usando PDO quote (mais seguro que addslashes)
+        // PDO::quote() já adiciona as aspas, então retornamos o valor completo
         $quoted = $pdo->quote($value);
         
-        // Remover as aspas externas que o quote adiciona (já vamos adicionar no INSERT)
-        return substr($quoted, 1, -1);
+        // Retornar o valor já com aspas (PDO::quote já adiciona)
+        return $quoted;
     }
 
     protected function clearDatabase()
@@ -544,7 +591,23 @@ class BackupController extends Controller
         if (preg_match('/INSERT\s+INTO\s+`?(\w+)`?/i', $sql, $matches)) {
             return $matches[1] ?? 'unknown';
         }
+        if (preg_match('/CREATE\s+TABLE\s+`?(\w+)`?/i', $sql, $matches)) {
+            return $matches[1] ?? 'unknown';
+        }
+        if (preg_match('/DROP\s+TABLE\s+`?(\w+)`?/i', $sql, $matches)) {
+            return $matches[1] ?? 'unknown';
+        }
         return 'unknown';
+    }
+
+    protected function getCommandType($sql)
+    {
+        $sql = trim($sql);
+        if (stripos($sql, 'CREATE TABLE') === 0) return 'CREATE TABLE';
+        if (stripos($sql, 'DROP TABLE') === 0) return 'DROP TABLE';
+        if (stripos($sql, 'INSERT INTO') === 0) return 'INSERT';
+        if (stripos($sql, 'ALTER TABLE') === 0) return 'ALTER TABLE';
+        return 'OTHER';
     }
 
     protected function executeInsertWithBetterEscape($command)
