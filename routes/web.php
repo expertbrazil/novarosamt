@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\StockMovementController;
 use App\Http\Controllers\ManifestController;
 use App\Http\Controllers\Admin\PurchaseOrderController;
+use App\Http\Controllers\Admin\BackupController;
 
 // PWA Manifest
 Route::get('/manifest.json', [ManifestController::class, 'index'])->name('manifest.json');
@@ -102,5 +103,13 @@ Route::middleware(['auth', 'role:admin|gerente|vendedor'])->prefix('admin')->nam
         Route::get('settings', [SettingsController::class, 'index'])->name('settings.index');
         Route::put('settings', [SettingsController::class, 'update'])->name('settings.update');
         Route::get('settings/municipios/{estado}', [SettingsController::class, 'getMunicipios'])->name('settings.municipios');
+
+        // Backups
+        Route::get('backups', [BackupController::class, 'index'])->name('backups.index');
+        Route::post('backups', [BackupController::class, 'create'])->name('backups.create');
+        Route::post('backups/upload', [BackupController::class, 'upload'])->name('backups.upload');
+        Route::get('backups/{filename}/download', [BackupController::class, 'download'])->name('backups.download');
+        Route::post('backups/restore', [BackupController::class, 'restore'])->name('backups.restore');
+        Route::delete('backups/{filename}', [BackupController::class, 'destroy'])->name('backups.destroy');
     });
 });
