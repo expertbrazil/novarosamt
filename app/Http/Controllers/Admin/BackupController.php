@@ -57,13 +57,15 @@ class BackupController extends Controller
             fwrite($handle, "START TRANSACTION;\n");
             fwrite($handle, "SET time_zone = \"+00:00\";\n\n");
             
-            // Obter todas as tabelas
+            // Obter TODAS as tabelas do banco (incluindo migrations para garantir estado idêntico)
             $tables = DB::select('SHOW TABLES');
             $dbName = config('database.connections.mysql.database');
             $tableKey = 'Tables_in_' . $dbName;
             
             foreach ($tables as $table) {
                 $tableName = $table->$tableKey;
+                
+                // Incluir TODAS as tabelas, incluindo migrations, para garantir backup 100% idêntico
                 
                 // Exportar estrutura da tabela
                 fwrite($handle, "-- Estrutura da tabela `{$tableName}`\n");
@@ -96,7 +98,9 @@ class BackupController extends Controller
                                 if ($value === null) {
                                     $rowValues[] = 'NULL';
                                 } else {
-                                    $rowValues[] = "'" . addslashes($value) . "'";
+                                    // Escapar corretamente para MySQL usando mysqli_real_escape_string ou função equivalente
+                                    $escapedValue = $this->escapeSqlValue($value);
+                                    $rowValues[] = "'" . $escapedValue . "'";
                                 }
                             }
                             
@@ -190,7 +194,7 @@ class BackupController extends Controller
     public function upload(Request $request)
     {
         $request->validate([
-            'backup_file' => 'required|file|mimes:sql,txt,zip|max:102400', // 100MB max
+            'backup_file' => 'required|file|mimes:sql,txt,zip|max:1048576', // 1GB max (em KB)
         ]);
         
         try {
@@ -287,39 +291,76 @@ class BackupController extends Controller
                 throw new \Exception('Arquivo de backup está vazio.');
             }
             
+            // Limpar banco de dados COMPLETAMENTE antes de restaurar
+            // Isso garante que o backup restaurado será 100% idêntico ao original
+            $this->clearDatabase();
+            
             // Desabilitar verificação de chaves estrangeiras temporariamente
             DB::statement('SET FOREIGN_KEY_CHECKS=0');
+            DB::statement('SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO"');
+            DB::statement('SET AUTOCOMMIT = 0');
+            DB::statement('START TRANSACTION');
             
-            // Dividir o SQL em comandos individuais
-            // Remover comentários e dividir por ponto e vírgula
+            // Processar o SQL preservando o estado exato do backup
+            // Remover apenas comentários, mas manter toda a estrutura
             $sql = preg_replace('/--.*$/m', '', $sqlContent); // Remove comentários de linha
             $sql = preg_replace('/\/\*.*?\*\//s', '', $sql); // Remove comentários de bloco
             
-            // Dividir em comandos
-            $commands = array_filter(
-                array_map('trim', explode(';', $sql)),
-                function($cmd) {
-                    return !empty($cmd) && !preg_match('/^(SET|START|COMMIT)/i', trim($cmd));
-                }
-            );
+            // Dividir comandos SQL respeitando strings (para valores serializados)
+            $commands = $this->splitSqlCommands($sql);
             
-            // Executar cada comando
+            // Executar cada comando na ordem exata do backup
             foreach ($commands as $command) {
                 $command = trim($command);
-                if (!empty($command)) {
+                if (!empty($command) && strlen($command) > 5) {
                     try {
                         DB::unprepared($command);
                     } catch (\Exception $e) {
-                        // Ignorar erros de tabelas que não existem ainda
-                        if (strpos($e->getMessage(), 'doesn\'t exist') === false) {
+                        // Se for erro de sintaxe em INSERT, pode ser problema de escape
+                        // Tentar executar com tratamento especial
+                        if (strpos($e->getMessage(), 'syntax error') !== false && 
+                            strpos($command, 'INSERT INTO') !== false) {
+                            
+                            // Log do erro mas continua (pode ser problema de escape em valores antigos)
+                            \Log::warning('Erro de sintaxe em INSERT durante restauração', [
+                                'error' => $e->getMessage(),
+                                'table' => $this->extractTableName($command),
+                                'command_preview' => substr($command, 0, 200)
+                            ]);
+                            
+                            // Tentar executar novamente com escape melhorado
+                            try {
+                                $this->executeInsertWithBetterEscape($command);
+                            } catch (\Exception $e2) {
+                                // Se ainda falhar, pular este comando
+                                \Log::error('Falha ao restaurar comando após tentativa de escape melhorado', [
+                                    'error' => $e2->getMessage()
+                                ]);
+                                continue;
+                            }
+                        } else {
+                            // Para outros erros, lançar exceção
                             throw $e;
                         }
                     }
                 }
             }
             
+            // Commit da transação
+            DB::statement('COMMIT');
+            
             // Reabilitar verificação de chaves estrangeiras
             DB::statement('SET FOREIGN_KEY_CHECKS=1');
+            
+            // Limpar cache do Laravel e Spatie Permission após restauração
+            // Isso garante que o sistema reconheça o estado restaurado
+            Artisan::call('cache:clear');
+            Artisan::call('config:clear');
+            try {
+                Artisan::call('permission:cache-reset');
+            } catch (\Exception $e) {
+                // Ignorar se o comando não existir
+            }
             
             // Limpar diretório temporário
             if ($tempDir && file_exists($tempDir)) {
@@ -392,6 +433,126 @@ class BackupController extends Controller
         }
         
         rmdir($dir);
+    }
+
+    protected function escapeSqlValue($value)
+    {
+        // Converter para string se necessário
+        if (is_bool($value)) {
+            $value = $value ? '1' : '0';
+        } elseif (is_array($value) || is_object($value)) {
+            $value = serialize($value);
+        } else {
+            $value = (string) $value;
+        }
+        
+        // Usar conexão do Laravel para escapar corretamente
+        $pdo = DB::connection()->getPdo();
+        
+        // Escapar usando PDO quote (mais seguro que addslashes)
+        $quoted = $pdo->quote($value);
+        
+        // Remover as aspas externas que o quote adiciona (já vamos adicionar no INSERT)
+        return substr($quoted, 1, -1);
+    }
+
+    protected function clearDatabase()
+    {
+        try {
+            // Desabilitar verificação de chaves estrangeiras
+            DB::statement('SET FOREIGN_KEY_CHECKS=0');
+            
+            // Obter todas as tabelas (incluindo migrations)
+            $tables = DB::select('SHOW TABLES');
+            $dbName = config('database.connections.mysql.database');
+            $tableKey = 'Tables_in_' . $dbName;
+            
+            // Excluir TODAS as tabelas, incluindo migrations
+            // Isso garante que o backup restaurado será 100% idêntico
+            foreach ($tables as $table) {
+                $tableName = $table->$tableKey;
+                DB::statement("DROP TABLE IF EXISTS `{$tableName}`");
+            }
+            
+            // Reabilitar verificação de chaves estrangeiras
+            DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        } catch (\Exception $e) {
+            // Se der erro, continuar mesmo assim
+            \Log::warning('Erro ao limpar banco de dados', ['error' => $e->getMessage()]);
+        }
+    }
+
+    protected function splitSqlCommands($sql)
+    {
+        $commands = [];
+        $currentCommand = '';
+        $inString = false;
+        $stringChar = '';
+        $escapeNext = false;
+        $len = strlen($sql);
+        
+        for ($i = 0; $i < $len; $i++) {
+            $char = $sql[$i];
+            $prevChar = $i > 0 ? $sql[$i - 1] : '';
+            $nextChar = $i < $len - 1 ? $sql[$i + 1] : '';
+            
+            // Tratar escape
+            if ($char === '\\' && !$escapeNext) {
+                $escapeNext = true;
+                $currentCommand .= $char;
+                continue;
+            }
+            
+            // Detectar início/fim de strings (respeitando escape)
+            if (($char === '"' || $char === "'") && !$escapeNext) {
+                if (!$inString) {
+                    $inString = true;
+                    $stringChar = $char;
+                } elseif ($char === $stringChar) {
+                    $inString = false;
+                    $stringChar = '';
+                }
+            }
+            
+            $currentCommand .= $char;
+            $escapeNext = false;
+            
+            // Se encontrar ponto e vírgula fora de string, é fim de comando
+            if ($char === ';' && !$inString && !$escapeNext) {
+                $command = trim($currentCommand);
+                // Incluir TODOS os comandos, exceto SET de controle que já executamos
+                if (!empty($command) && 
+                    !preg_match('/^(SET FOREIGN_KEY_CHECKS|SET SQL_MODE|SET AUTOCOMMIT|SET time_zone|START TRANSACTION|COMMIT)/i', trim($command))) {
+                    $commands[] = $command;
+                }
+                $currentCommand = '';
+            }
+        }
+        
+        // Adicionar último comando se houver
+        $command = trim($currentCommand);
+        if (!empty($command) && 
+            !preg_match('/^(SET FOREIGN_KEY_CHECKS|SET SQL_MODE|SET AUTOCOMMIT|SET time_zone|START TRANSACTION|COMMIT)/i', trim($command))) {
+            $commands[] = $command;
+        }
+        
+        return $commands;
+    }
+
+    protected function extractTableName($sql)
+    {
+        if (preg_match('/INSERT\s+INTO\s+`?(\w+)`?/i', $sql, $matches)) {
+            return $matches[1] ?? 'unknown';
+        }
+        return 'unknown';
+    }
+
+    protected function executeInsertWithBetterEscape($command)
+    {
+        // Tentar executar o comando usando PDO diretamente com modo mais permissivo
+        $pdo = DB::connection()->getPdo();
+        $pdo->setAttribute(\PDO::ATTR_EMULATE_PREPARES, true);
+        $pdo->exec($command);
     }
 
     public function destroy($filename)

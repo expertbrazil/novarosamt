@@ -13,6 +13,9 @@
             <p class="mt-2 text-sm text-gray-700 dark:text-gray-300">
                 Gerencie os backups do banco de dados. Crie, faça upload, restaure ou exclua backups conforme necessário.
             </p>
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                Tamanho máximo de upload: 1GB (inclui banco de dados + arquivos de upload)
+            </p>
         </div>
         <div class="mt-4 sm:mt-0 flex items-center space-x-3">
             <form method="POST" action="{{ route('admin.backups.upload') }}" enctype="multipart/form-data" class="inline">
@@ -30,6 +33,9 @@
                        class="hidden"
                        onchange="this.form.submit()"
                        required>
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Máx: 1GB
+                </p>
             </form>
             <form method="POST" action="{{ route('admin.backups.create') }}" class="inline">
                 @csrf
