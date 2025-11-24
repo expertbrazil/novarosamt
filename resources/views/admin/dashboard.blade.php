@@ -215,8 +215,43 @@
     
     <div class="px-4 sm:px-6 py-6">
         @if($topProducts->count() > 0)
-            <div style="height: 400px; position: relative;">
-                <canvas id="topProductsChart"></canvas>
+            @php
+                $maxQuantity = $topProducts->max('quantity');
+            @endphp
+            
+            <div class="space-y-4">
+                @foreach($topProducts->take(10) as $index => $product)
+                    @php
+                        $percentage = $maxQuantity > 0 ? ($product['quantity'] / $maxQuantity) * 100 : 0;
+                    @endphp
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3 flex-1 min-w-0">
+                                <span class="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center text-xs font-bold text-indigo-600 dark:text-indigo-300">
+                                    {{ $index + 1 }}
+                                </span>
+                                <span class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                    {{ $product['name'] }}
+                                </span>
+                            </div>
+                            <span class="flex-shrink-0 ml-4 text-sm font-bold text-gray-700 dark:text-gray-200">
+                                {{ number_format($product['quantity'], 0, ',', '.') }}
+                            </span>
+                        </div>
+                        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-6 overflow-hidden">
+                            <div 
+                                class="h-full bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-full flex items-center justify-end pr-2 transition-all duration-500"
+                                style="width: {{ $percentage }}%; min-width: 2%;"
+                            >
+                                @if($percentage > 15)
+                                    <span class="text-xs font-bold text-white">
+                                        {{ number_format($product['quantity'], 0, ',', '.') }}
+                                    </span>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
             </div>
         @else
             <div class="text-center py-12 text-gray-500 dark:text-gray-400">
@@ -228,131 +263,5 @@
         @endif
     </div>
 </div>
-
-@if($topProducts->count() > 0)
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const ctx = document.getElementById('topProductsChart');
-    if (!ctx) return;
-
-    const topProducts = @json($topProducts->take(10));
-    
-    // Detectar tema atual de forma mais confiável
-    const htmlElement = document.documentElement;
-    const isDark = htmlElement.classList.contains('dark') || 
-                   (window.getComputedStyle(htmlElement).colorScheme === 'dark');
-    
-    // Cores adaptáveis ao tema - usar valores absolutos para garantir visibilidade
-    const gridColor = isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)';
-    const textColor = isDark ? '#ffffff' : '#1f2937';
-    const borderColor = isDark ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)';
-    
-    // Debug: verificar se as cores estão sendo aplicadas
-    console.log('Tema escuro:', isDark, 'Cor do texto:', textColor);
-    
-    // Gradiente para as barras
-    const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 400);
-    gradient.addColorStop(0, 'rgba(99, 102, 241, 0.8)');
-    gradient.addColorStop(1, 'rgba(99, 102, 241, 0.3)');
-    
-    new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: topProducts.map(p => {
-                // Truncar nomes longos mas manter mais caracteres
-                return p.name.length > 25 ? p.name.substring(0, 25) + '...' : p.name;
-            }),
-            datasets: [{
-                label: 'Quantidade Vendida',
-                data: topProducts.map(p => p.quantity),
-                backgroundColor: gradient,
-                borderColor: 'rgba(99, 102, 241, 1)',
-                borderWidth: 2,
-                borderRadius: 6,
-                borderSkipped: false,
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            layout: {
-                padding: {
-                    top: 10,
-                    bottom: 10,
-                    left: 10,
-                    right: 10
-                }
-            },
-            plugins: {
-                legend: {
-                    display: false
-                },
-                tooltip: {
-                    backgroundColor: isDark ? 'rgba(31, 41, 55, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-                    titleColor: isDark ? 'rgb(255, 255, 255)' : 'rgb(0, 0, 0)',
-                    bodyColor: isDark ? 'rgb(255, 255, 255)' : 'rgb(0, 0, 0)',
-                    borderColor: borderColor,
-                    borderWidth: 1,
-                    padding: 12,
-                    displayColors: false,
-                    callbacks: {
-                        title: function(context) {
-                            return topProducts[context[0].dataIndex].name;
-                        },
-                        label: function(context) {
-                            return 'Quantidade: ' + context.parsed.y.toLocaleString('pt-BR') + ' unidades';
-                        }
-                    }
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    grid: {
-                        color: gridColor,
-                        drawBorder: false,
-                    },
-                    ticks: {
-                        color: textColor,
-                        stepSize: 1,
-                        callback: function(value) {
-                            return value.toLocaleString('pt-BR');
-                        },
-                        font: {
-                            size: 12,
-                            weight: '500',
-                            family: "'Inter', 'system-ui', sans-serif"
-                        }
-                    },
-                    title: {
-                        display: false
-                    }
-                },
-                x: {
-                    grid: {
-                        display: false,
-                        drawBorder: false,
-                    },
-                    ticks: {
-                        color: textColor,
-                        maxRotation: 45,
-                        minRotation: 45,
-                        font: {
-                            size: 11,
-                            weight: '500',
-                            family: "'Inter', 'system-ui', sans-serif"
-                        }
-                    },
-                    title: {
-                        display: false
-                    }
-                }
-            }
-        }
-    });
-});
-</script>
-@endif
 @endsection
 
