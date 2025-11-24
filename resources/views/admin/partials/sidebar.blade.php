@@ -25,6 +25,12 @@
             'icon' => 'M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z',
         ],
         [
+            'name' => 'Pedidos de Compra',
+            'href' => route('admin.purchase-orders.index'),
+            'current' => request()->routeIs('admin.purchase-orders.*'),
+            'icon' => 'M3 5.25h18M5.25 21h13.5c.621 0 1.125-.504 1.125-1.125V6M5.25 21A2.25 2.25 0 013 18.75V6m6 8.25h6',
+        ],
+        [
             'name' => 'Clientes',
             'href' => route('admin.customers.index'),
             'current' => request()->routeIs('admin.customers.*'),
@@ -90,6 +96,16 @@
                             <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                         </svg>
                         Novo Pedido
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('admin.purchase-orders.create') }}" 
+                       class="group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200">
+                        <svg class="h-6 w-6 shrink-0 text-gray-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400" 
+                             fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m6-6H6m12 9H6A2.25 2.25 0 013.75 18.75V6A2.25 2.25 0 016 3.75h12A2.25 2.25 0 0120.25 6v12A2.25 2.25 0 0118 20.25z" />
+                        </svg>
+                        Pedido de Compra
                     </a>
                 </li>
             </ul>

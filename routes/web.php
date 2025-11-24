@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\StockMovementController;
 use App\Http\Controllers\ManifestController;
+use App\Http\Controllers\Admin\PurchaseOrderController;
 
 // PWA Manifest
 Route::get('/manifest.json', [ManifestController::class, 'index'])->name('manifest.json');
@@ -72,6 +73,17 @@ Route::middleware(['auth', 'role:admin|gerente|vendedor'])->prefix('admin')->nam
         Route::post('orders/{order}/send-email', [AdminOrderController::class, 'sendEmail'])->name('orders.send-email');
         Route::post('orders/{order}/sync-customer', [AdminOrderController::class, 'syncCustomer'])->name('orders.sync-customer');
         Route::post('orders/{order}/reverse-stock', [AdminOrderController::class, 'reverseStock'])->name('orders.reverse-stock');
+
+        // Pedidos de compra
+        Route::get('purchase-orders', [PurchaseOrderController::class, 'index'])->name('purchase-orders.index');
+        Route::get('purchase-orders/create', [PurchaseOrderController::class, 'create'])->name('purchase-orders.create');
+        Route::post('purchase-orders', [PurchaseOrderController::class, 'store'])->name('purchase-orders.store');
+        Route::post('purchase-orders/{purchaseOrder}/send-email', [PurchaseOrderController::class, 'sendEmail'])->name('purchase-orders.send-email');
+        Route::post('purchase-orders/{purchaseOrder}/toggle-status', [PurchaseOrderController::class, 'toggleStatus'])->name('purchase-orders.toggle-status');
+        Route::get('purchase-orders/{purchaseOrder}/pdf', [PurchaseOrderController::class, 'exportPdf'])->name('purchase-orders.pdf');
+        Route::get('purchase-orders/{purchaseOrder}', [PurchaseOrderController::class, 'show'])->name('purchase-orders.show');
+        Route::get('purchase-orders/{purchaseOrder}/edit', [PurchaseOrderController::class, 'edit'])->name('purchase-orders.edit');
+        Route::put('purchase-orders/{purchaseOrder}', [PurchaseOrderController::class, 'update'])->name('purchase-orders.update');
 
         Route::resource('customers', CustomerController::class);
         Route::post('customers/{customer}/toggle', [CustomerController::class, 'toggle'])->name('customers.toggle');
