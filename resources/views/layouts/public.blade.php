@@ -7,14 +7,17 @@
     <meta name="keywords" content="produtos de limpeza, limpeza profissional, detergentes, desinfetantes, Nova Rosa MT">
     <title>{{ $title ?? 'Portal de Produtos de Limpeza - Nova Rosa MT' }}</title>
     
-    @if(!empty($settings['google_analytics_id'] ?? null))
+    @php
+        $gaId = isset($settings['google_analytics_id']) && !empty($settings['google_analytics_id']) ? $settings['google_analytics_id'] : null;
+    @endphp
+    @if($gaId)
     <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id={{ $settings['google_analytics_id'] }}"></script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{ $gaId }}"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-      gtag('config', '{{ $settings['google_analytics_id'] }}');
+      gtag('config', '{{ $gaId }}');
     </script>
     @endif
     
