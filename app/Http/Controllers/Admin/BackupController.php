@@ -57,7 +57,7 @@ class BackupController extends Controller
             fwrite($handle, "START TRANSACTION;\n");
             fwrite($handle, "SET time_zone = \"+00:00\";\n\n");
             
-            // Obter TODAS as tabelas do banco (incluindo migrations para garantir estado idêntico)
+            // Obter TODAS as tabelas do banco (EXCETO migrations - não incluímos para não interferir)
             $tables = DB::select('SHOW TABLES');
             $dbName = config('database.connections.mysql.database');
             $tableKey = 'Tables_in_' . $dbName;
@@ -67,6 +67,13 @@ class BackupController extends Controller
             
             foreach ($tables as $table) {
                 $tableName = $table->$tableKey;
+                
+                // NÃO incluir a tabela migrations no backup
+                // Isso permite que após a restauração, as migrations sejam executadas normalmente
+                if ($tableName === 'migrations') {
+                    continue;
+                }
+                
                 $exportedTables[] = $tableName;
                 
                 try {
@@ -319,8 +326,12 @@ class BackupController extends Controller
             }
             
             // Limpar banco de dados COMPLETAMENTE antes de restaurar
-            // Isso garante que o backup restaurado será 100% idêntico ao original
             $this->clearDatabase();
+            
+            // Executar migrations primeiro para criar todas as tabelas
+            // Isso garante que todas as tabelas existam antes de inserir dados
+            \Log::info('Executando migrations antes da restauração...');
+            Artisan::call('migrate', ['--force' => true]);
             
             // Desabilitar verificação de chaves estrangeiras temporariamente
             DB::statement('SET FOREIGN_KEY_CHECKS=0');
@@ -336,95 +347,105 @@ class BackupController extends Controller
             // Dividir comandos SQL respeitando strings (para valores serializados)
             $commands = $this->splitSqlCommands($sql);
             
-            // Executar cada comando na ordem exata do backup
+            // Separar comandos CREATE TABLE e INSERT
+            // Como já executamos as migrations, vamos IGNORAR CREATE TABLE e DROP TABLE
+            // e executar APENAS os INSERTs
             $executedCount = 0;
             $failedCount = 0;
             $failedCommands = [];
-            $createdTables = [];
             $insertedTables = [];
             
             foreach ($commands as $index => $command) {
                 $command = trim($command);
                 if (!empty($command) && strlen($command) > 5) {
-                    try {
-                        DB::unprepared($command);
-                        $executedCount++;
-                        
-                        // Rastrear tabelas criadas e com dados inseridos
-                        if (preg_match('/CREATE\s+TABLE\s+`?(\w+)`?/i', $command, $matches)) {
-                            $createdTables[] = $matches[1];
-                        } elseif (preg_match('/INSERT\s+INTO\s+`?(\w+)`?/i', $command, $matches)) {
-                            $insertedTables[] = $matches[1];
-                        }
-                        
-                    } catch (\Exception $e) {
-                        $failedCount++;
-                        $errorMsg = $e->getMessage();
-                        
-                        // Se for erro de sintaxe em INSERT, pode ser problema de escape
-                        if (strpos($errorMsg, 'syntax error') !== false && 
-                            strpos($command, 'INSERT INTO') !== false) {
+                    
+                    // IGNORAR comandos CREATE TABLE e DROP TABLE (já foram criados pelas migrations)
+                    if (preg_match('/^(CREATE\s+TABLE|DROP\s+TABLE)/i', $command)) {
+                        \Log::debug('Ignorando comando CREATE/DROP TABLE (tabelas já criadas pelas migrations)', [
+                            'command_preview' => substr($command, 0, 100)
+                        ]);
+                        continue;
+                    }
+                    
+                    // Executar apenas INSERTs
+                    if (preg_match('/INSERT\s+INTO/i', $command)) {
+                        try {
+                            // Limpar dados existentes da tabela antes de inserir (se necessário)
+                            $tableName = $this->extractTableName($command);
+                            if ($tableName !== 'unknown') {
+                                // Limpar apenas se a tabela tiver dados (opcional - pode comentar se quiser manter dados existentes)
+                                // DB::table($tableName)->truncate();
+                            }
                             
-                            // Tentar executar novamente com escape melhorado
-                            try {
-                                $this->executeInsertWithBetterEscape($command);
+                            DB::unprepared($command);
+                            $executedCount++;
+                            
+                            if ($tableName !== 'unknown') {
+                                $insertedTables[] = $tableName;
+                            }
+                            
+                        } catch (\Exception $e) {
+                            $failedCount++;
+                            $errorMsg = $e->getMessage();
+                            
+                            // Se for erro de sintaxe em INSERT, pode ser problema de escape
+                            if (strpos($errorMsg, 'syntax error') !== false) {
+                                // Tentar executar novamente com escape melhorado
+                                try {
+                                    $this->executeInsertWithBetterEscape($command);
+                                    $executedCount++;
+                                    $failedCount--;
+                                    
+                                    $tableName = $this->extractTableName($command);
+                                    if ($tableName !== 'unknown') {
+                                        $insertedTables[] = $tableName;
+                                    }
+                                    
+                                    \Log::info('Comando INSERT restaurado com sucesso após tentativa de escape melhorado', [
+                                        'table' => $tableName
+                                    ]);
+                                } catch (\Exception $e2) {
+                                    // Se ainda falhar, logar mas continuar
+                                    $tableName = $this->extractTableName($command);
+                                    $failedCommands[] = [
+                                        'table' => $tableName,
+                                        'error' => $e2->getMessage(),
+                                        'preview' => substr($command, 0, 200)
+                                    ];
+                                    \Log::error('Falha ao restaurar comando INSERT', [
+                                        'table' => $tableName,
+                                        'error' => $e2->getMessage(),
+                                        'command_preview' => substr($command, 0, 200)
+                                    ]);
+                                }
+                            } elseif (strpos($errorMsg, 'Duplicate') !== false) {
+                                // Ignorar erros de duplicação (registro já existe)
                                 $executedCount++;
                                 $failedCount--;
-                                
-                                $tableName = $this->extractTableName($command);
-                                if ($tableName !== 'unknown') {
-                                    $insertedTables[] = $tableName;
-                                }
-                                
-                                \Log::info('Comando INSERT restaurado com sucesso após tentativa de escape melhorado', [
-                                    'table' => $tableName
+                                \Log::debug('Comando INSERT ignorado (registro duplicado)', [
+                                    'table' => $this->extractTableName($command),
+                                    'command_preview' => substr($command, 0, 100)
                                 ]);
-                            } catch (\Exception $e2) {
-                                // Se ainda falhar, logar mas continuar
+                            } else {
+                                // Para outros erros, logar mas continuar
                                 $tableName = $this->extractTableName($command);
                                 $failedCommands[] = [
                                     'table' => $tableName,
-                                    'error' => $e2->getMessage(),
+                                    'error' => $errorMsg,
                                     'preview' => substr($command, 0, 200)
                                 ];
-                                \Log::error('Falha ao restaurar comando INSERT', [
+                                \Log::error('Erro ao executar comando INSERT durante restauração', [
+                                    'error' => $errorMsg,
                                     'table' => $tableName,
-                                    'error' => $e2->getMessage(),
                                     'command_preview' => substr($command, 0, 200)
                                 ]);
                             }
-                        } elseif (strpos($errorMsg, 'already exists') !== false || 
-                                  strpos($errorMsg, 'Duplicate') !== false) {
-                            // Ignorar erros de duplicação (tabela/registro já existe)
-                            $executedCount++;
-                            $failedCount--;
-                            \Log::debug('Comando ignorado (já existe)', ['command_preview' => substr($command, 0, 100)]);
-                        } elseif (strpos($command, 'DROP TABLE') !== false && 
-                                  strpos($errorMsg, "doesn't exist") !== false) {
-                            // Ignorar erros de DROP TABLE se a tabela não existir
-                            $executedCount++;
-                            $failedCount--;
-                            \Log::debug('DROP TABLE ignorado (tabela não existe)', ['command_preview' => substr($command, 0, 100)]);
-                        } else {
-                            // Para outros erros críticos, logar mas continuar
-                            $tableName = $this->extractTableName($command);
-                            $failedCommands[] = [
-                                'table' => $tableName,
-                                'error' => $errorMsg,
-                                'preview' => substr($command, 0, 200)
-                            ];
-                            \Log::error('Erro ao executar comando SQL durante restauração', [
-                                'error' => $errorMsg,
-                                'command_type' => $this->getCommandType($command),
-                                'table' => $tableName,
-                                'command_preview' => substr($command, 0, 200)
-                            ]);
                         }
                     }
                 }
             }
             
-            // Verificar se todas as tabelas foram criadas corretamente
+            // Verificar se todas as tabelas foram populadas corretamente
             $allTables = DB::select('SHOW TABLES');
             $dbName = config('database.connections.mysql.database');
             $tableKey = 'Tables_in_' . $dbName;
@@ -434,19 +455,18 @@ class BackupController extends Controller
             
             // Log do resumo da restauração
             \Log::info('Restauração concluída', [
-                'executados' => $executedCount,
-                'falhados' => $failedCount,
-                'total' => count($commands),
-                'tabelas_criadas' => count(array_unique($createdTables)),
-                'tabelas_com_dados' => count(array_unique($insertedTables)),
-                'tabelas_restauradas' => count($restoredTables)
+                'inserts_executados' => $executedCount,
+                'inserts_falhados' => $failedCount,
+                'total_comandos' => count($commands),
+                'tabelas_com_dados_inseridos' => count(array_unique($insertedTables)),
+                'tabelas_existentes' => count($restoredTables)
             ]);
             
             // Se muitos comandos falharam, lançar exceção
-            if ($failedCount > 0 && $failedCount > count($commands) * 0.05) {
-                $errorMessage = "Muitos comandos falharam durante a restauração ({$failedCount} de " . count($commands) . "). ";
-                $errorMessage .= "Tabelas criadas: " . count(array_unique($createdTables)) . ". ";
-                $errorMessage .= "Tabelas restauradas: " . count($restoredTables) . ".";
+            if ($failedCount > 0 && $failedCount > $executedCount * 0.1) {
+                $errorMessage = "Muitos INSERTs falharam durante a restauração ({$failedCount} de " . ($executedCount + $failedCount) . "). ";
+                $errorMessage .= "Tabelas com dados inseridos: " . count(array_unique($insertedTables)) . ". ";
+                $errorMessage .= "Tabelas existentes: " . count($restoredTables) . ".";
                 
                 if (!empty($failedCommands)) {
                     $errorMessage .= " Erros: " . json_encode(array_slice($failedCommands, 0, 5));
