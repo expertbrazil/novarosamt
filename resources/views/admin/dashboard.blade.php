@@ -237,12 +237,19 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!ctx) return;
 
     const topProducts = @json($topProducts->take(10));
-    const isDark = document.documentElement.classList.contains('dark');
     
-    // Cores adaptáveis ao tema - com maior contraste
-    const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+    // Detectar tema atual de forma mais confiável
+    const htmlElement = document.documentElement;
+    const isDark = htmlElement.classList.contains('dark') || 
+                   (window.getComputedStyle(htmlElement).colorScheme === 'dark');
+    
+    // Cores adaptáveis ao tema - usar valores absolutos para garantir visibilidade
+    const gridColor = isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)';
     const textColor = isDark ? '#ffffff' : '#1f2937';
-    const borderColor = isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)';
+    const borderColor = isDark ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)';
+    
+    // Debug: verificar se as cores estão sendo aplicadas
+    console.log('Tema escuro:', isDark, 'Cor do texto:', textColor);
     
     // Gradiente para as barras
     const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 400);
@@ -283,8 +290,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 },
                 tooltip: {
                     backgroundColor: isDark ? 'rgba(31, 41, 55, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-                    titleColor: isDark ? 'rgba(255, 255, 255, 0.9)' : 'rgba(0, 0, 0, 0.9)',
-                    bodyColor: isDark ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.8)',
+                    titleColor: isDark ? 'rgb(255, 255, 255)' : 'rgb(0, 0, 0)',
+                    bodyColor: isDark ? 'rgb(255, 255, 255)' : 'rgb(0, 0, 0)',
                     borderColor: borderColor,
                     borderWidth: 1,
                     padding: 12,
@@ -314,8 +321,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         },
                         font: {
                             size: 12,
-                            weight: '500'
+                            weight: '500',
+                            family: "'Inter', 'system-ui', sans-serif"
                         }
+                    },
+                    title: {
+                        display: false
                     }
                 },
                 x: {
@@ -329,8 +340,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         minRotation: 45,
                         font: {
                             size: 11,
-                            weight: '500'
+                            weight: '500',
+                            family: "'Inter', 'system-ui', sans-serif"
                         }
+                    },
+                    title: {
+                        display: false
                     }
                 }
             }
