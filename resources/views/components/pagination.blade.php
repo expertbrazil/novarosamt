@@ -1,5 +1,5 @@
 @if ($paginator->hasPages())
-    <nav class="flex items-center justify-between border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 sm:px-6" aria-label="Pagination">
+    <nav class="flex items-center justify-between border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 sm:px-6" aria-label="Navegação de Paginação">
         <div class="hidden sm:block">
             <p class="text-sm text-gray-700 dark:text-gray-300">
                 Mostrando
