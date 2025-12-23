@@ -96,6 +96,9 @@ Route::middleware(['auth', 'role:admin|gerente|vendedor'])->prefix('admin')->nam
 
         Route::resource('customers', CustomerController::class);
         Route::post('customers/{customer}/toggle', [CustomerController::class, 'toggle'])->name('customers.toggle');
+        Route::post('customers/send-birthday-messages', [CustomerController::class, 'sendBirthdayMessages'])->name('customers.send-birthday-messages');
+        Route::get('customers/{customer}/preview-birthday-message', [CustomerController::class, 'previewBirthdayMessage'])->name('customers.preview-birthday-message');
+        Route::post('customers/{customer}/send-birthday-message', [CustomerController::class, 'sendBirthdayMessage'])->name('customers.send-birthday-message');
         
         // Rota de teste
         Route::get('customers-test', function() {

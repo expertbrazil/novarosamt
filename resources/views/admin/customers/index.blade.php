@@ -145,6 +145,27 @@
                         @endif
                     </div>
                 </div>
+                
+                @if(request()->filled('birthday_month'))
+                    <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <form method="POST" action="{{ route('admin.customers.send-birthday-messages') }}" class="inline">
+                            @csrf
+                            <input type="hidden" name="month" value="{{ request('birthday_month') }}">
+                            <button type="submit" 
+                                    class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors duration-200"
+                                    onclick="return confirm('Deseja enviar mensagens de parabéns para todos os aniversariantes deste mês que possuem telefone cadastrado?')">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"/>
+                                </svg>
+                                Enviar Mensagens de Parabéns
+                            </button>
+                        </form>
+                        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                            Enviará mensagens via WhatsApp para todos os aniversariantes deste mês que possuem telefone cadastrado e estão ativos.
+                        </p>
+                    </div>
+                @endif
+                </div>
             </form>
         </div>
     </div> 
@@ -279,6 +300,18 @@
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
                                                 </svg>
                                             </a>
+                                        @endif
+                                        
+                                        @if(request()->filled('birthday_month') && $customer->phone && $customer->birth_date)
+                                            <button type="button" 
+                                                    onclick="previewBirthdayMessage({{ $customer->id }}, '{{ $customer->name }}')"
+                                                    class="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-purple-600 hover:text-purple-900 dark:text-purple-300 dark:hover:text-purple-100 shadow-sm transition-colors duration-200"
+                                                    title="Enviar mensagem de parabéns"
+                                                    aria-label="Enviar mensagem de parabéns">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"/>
+                                                </svg>
+                                            </button>
                                         @endif
                                         
                                         <a href="{{ route('admin.customers.edit', $customer) }}" 
@@ -421,6 +454,18 @@
                                 Detalhes
                             </a>
 
+                            @if(request()->filled('birthday_month') && $customer->phone && $customer->birth_date)
+                                <button type="button" 
+                                        onclick="previewBirthdayMessage({{ $customer->id }}, '{{ $customer->name }}')"
+                                        class="inline-flex items-center px-3 py-1.5 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm font-medium text-purple-600 hover:text-purple-900 dark:text-purple-300 dark:hover:text-purple-100 shadow-sm transition-colors duration-200"
+                                        title="Enviar mensagem de parabéns">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"/>
+                                    </svg>
+                                    Parabéns
+                                </button>
+                            @endif
+
                             <a href="{{ route('admin.customers.edit', $customer) }}" 
                                class="inline-flex items-center px-3 py-1.5 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm font-medium text-blue-600 hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-100 shadow-sm transition-colors duration-200"
                                title="Editar cliente">
@@ -518,4 +563,120 @@
         </div>
     @endif
 </div>
+
+<!-- Modal de Preview da Mensagem de Aniversário -->
+<div id="birthdayModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-2/3 lg:w-1/2 shadow-lg rounded-md bg-white dark:bg-gray-800">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                    Mensagem de Parabéns
+                </h3>
+                <button onclick="closeBirthdayModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="mb-4">
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                    <strong>Cliente:</strong> <span id="modalCustomerName" class="text-gray-900 dark:text-white"></span>
+                </p>
+                <p class="text-sm text-gray-600 dark:text-gray-400">
+                    <strong>Telefone:</strong> <span id="modalCustomerPhone" class="text-gray-900 dark:text-white"></span>
+                </p>
+            </div>
+            
+            <div class="mb-4">
+                <p class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Preview da mensagem:</p>
+                <textarea id="modalMessagePreview" 
+                          rows="8"
+                          class="w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 whitespace-pre-wrap font-mono text-sm resize-y" 
+                          style="background-color: #ffffff; color: #000000; border-color: #d1d5db;"></textarea>
+                <style>
+                    #modalMessagePreview {
+                        background-color: #ffffff !important;
+                        color: #000000 !important;
+                        border-color: #d1d5db !important;
+                    }
+                    .dark #modalMessagePreview,
+                    .dark #modalMessagePreview:focus {
+                        background-color: #1f2937 !important;
+                        color: #ffffff !important;
+                        border-color: #4b5563 !important;
+                    }
+                </style>
+            </div>
+            
+            <div class="flex justify-end space-x-3">
+                <button onclick="closeBirthdayModal()" 
+                        class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+                    Cancelar
+                </button>
+                <form id="sendBirthdayForm" method="POST" class="inline">
+                    @csrf
+                    <button type="submit" 
+                            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                        <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                        </svg>
+                        Enviar Mensagem
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function previewBirthdayMessage(customerId, customerName) {
+    // Mostrar loading
+    document.getElementById('modalCustomerName').textContent = customerName;
+    document.getElementById('modalCustomerPhone').textContent = 'Carregando...';
+    document.getElementById('modalMessagePreview').textContent = 'Carregando mensagem...';
+    document.getElementById('birthdayModal').classList.remove('hidden');
+    
+    // Buscar preview da mensagem
+    fetch(`/admin/customers/${customerId}/preview-birthday-message`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('modalCustomerPhone').textContent = data.phone || 'Não informado';
+                document.getElementById('modalMessagePreview').value = data.message;
+                
+                // Configurar formulário de envio
+                const form = document.getElementById('sendBirthdayForm');
+                form.action = `/admin/customers/${customerId}/send-birthday-message`;
+                
+                // Adicionar campo hidden com a mensagem editada
+                let messageInput = form.querySelector('input[name="message"]');
+                if (!messageInput) {
+                    messageInput = document.createElement('input');
+                    messageInput.type = 'hidden';
+                    messageInput.name = 'message';
+                    form.appendChild(messageInput);
+                }
+                
+                // Atualizar mensagem quando o usuário editar
+                document.getElementById('modalMessagePreview').addEventListener('input', function() {
+                    messageInput.value = this.value;
+                });
+                messageInput.value = data.message;
+            } else {
+                alert('Erro ao carregar mensagem: ' + (data.error || 'Erro desconhecido'));
+                closeBirthdayModal();
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            alert('Erro ao carregar mensagem. Tente novamente.');
+            closeBirthdayModal();
+        });
+}
+
+function closeBirthdayModal() {
+    document.getElementById('birthdayModal').classList.add('hidden');
+}
+</script>
 @endsection

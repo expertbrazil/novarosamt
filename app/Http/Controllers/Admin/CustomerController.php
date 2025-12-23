@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
+use App\Services\EvolutionApiService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class CustomerController extends Controller
 {
@@ -255,6 +257,185 @@ class CustomerController extends Controller
         $customer->is_active = !$customer->is_active;
         $customer->save();
         return back()->with('success', 'Status do cliente atualizado.');
+    }
+
+    /**
+     * Retorna preview da mensagem de aniversário para um cliente
+     */
+    public function previewBirthdayMessage(Customer $customer)
+    {
+        if (!$customer->birth_date) {
+            return response()->json(['error' => 'Cliente não possui data de nascimento cadastrada.'], 400);
+        }
+
+        $age = \Carbon\Carbon::parse($customer->birth_date)->age;
+        $birthdayDate = \Carbon\Carbon::parse($customer->birth_date);
+        $birthdayFormatted = $birthdayDate->format('d/m');
+        
+        $message = "🎉 *Parabéns, {$customer->name}!* 🎉\n\n";
+        $message .= "Sabemos que seu aniversário foi em {$birthdayFormatted}, mas nunca é tarde para celebrar mais um ano de vida! Que seus {$age} anos sejam marcados por saúde, sucesso e muitas conquistas.\n\n";
+        $message .= "Obrigado por fazer parte da nossa história e confiar no nosso trabalho.\n\n";
+        $message .= "*Feliz aniversário!* 🎂✨";
+
+        return response()->json([
+            'success' => true,
+            'message' => $message,
+            'customer_name' => $customer->name,
+            'phone' => $customer->phone
+        ]);
+    }
+
+    /**
+     * Envia mensagem de parabéns para um cliente específico
+     */
+    public function sendBirthdayMessage(Request $request, Customer $customer)
+    {
+        if (!$customer->phone) {
+            return back()->with('error', 'Cliente não possui telefone cadastrado.');
+        }
+
+        if (!$customer->birth_date) {
+            return back()->with('error', 'Cliente não possui data de nascimento cadastrada.');
+        }
+
+        $evolutionApi = new EvolutionApiService();
+        
+        if (!$evolutionApi->isConfigured()) {
+            return back()->with('error', 'Evolution API não está configurada. Configure em Parâmetros > Evolution API.');
+        }
+
+        try {
+            // Formatar telefone
+            $phone = preg_replace('/\D/', '', $customer->phone);
+            if (!str_starts_with($phone, '55')) {
+                $phone = '55' . $phone;
+            }
+
+            // Usar mensagem editada do formulário ou criar mensagem padrão
+            $message = $request->input('message');
+            
+            if (empty($message)) {
+                // Criar mensagem personalizada padrão
+                $age = \Carbon\Carbon::parse($customer->birth_date)->age;
+                $birthdayDate = \Carbon\Carbon::parse($customer->birth_date);
+                $birthdayFormatted = $birthdayDate->format('d/m');
+                
+                $message = "🎉 *Parabéns, {$customer->name}!* 🎉\n\n";
+                $message .= "Sabemos que seu aniversário foi em {$birthdayFormatted}, mas nunca é tarde para celebrar mais um ano de vida! Que seus {$age} anos sejam marcados por saúde, sucesso e muitas conquistas.\n\n";
+                $message .= "Obrigado por fazer parte da nossa história e confiar no nosso trabalho.\n\n";
+                $message .= "*Feliz aniversário!* 🎂✨";
+            }
+
+            // Enviar mensagem
+            $result = $evolutionApi->sendTextMessage($phone, $message);
+
+            if ($result['success']) {
+                Log::info("Mensagem de aniversário enviada para {$customer->name} ({$phone})");
+                return back()->with('success', "Mensagem de parabéns enviada com sucesso para {$customer->name}!");
+            } else {
+                Log::error("Erro ao enviar mensagem de aniversário para {$customer->name}", [
+                    'phone' => $phone,
+                    'error' => $result['message'] ?? 'Erro desconhecido'
+                ]);
+                return back()->with('error', "Erro ao enviar mensagem: " . ($result['message'] ?? 'Erro desconhecido'));
+            }
+
+        } catch (\Exception $e) {
+            Log::error("Exceção ao enviar mensagem de aniversário para {$customer->name}", [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return back()->with('error', "Erro ao enviar mensagem: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Envia mensagens de parabéns para aniversariantes do mês
+     */
+    public function sendBirthdayMessages(Request $request)
+    {
+        $month = $request->integer('month', now()->month);
+        
+        // Buscar aniversariantes do mês com telefone
+        $birthdayCustomers = Customer::whereNotNull('birth_date')
+            ->whereNotNull('phone')
+            ->whereMonth('birth_date', $month)
+            ->where('is_active', true)
+            ->get();
+
+        if ($birthdayCustomers->isEmpty()) {
+            return back()->with('error', 'Nenhum aniversariante encontrado com telefone cadastrado para este mês.');
+        }
+
+        $evolutionApi = new EvolutionApiService();
+        
+        if (!$evolutionApi->isConfigured()) {
+            return back()->with('error', 'Evolution API não está configurada. Configure em Parâmetros > Evolution API.');
+        }
+
+        $successCount = 0;
+        $errorCount = 0;
+        $errors = [];
+
+        foreach ($birthdayCustomers as $customer) {
+            try {
+                // Formatar telefone (remover caracteres não numéricos e adicionar código do país se necessário)
+                $phone = preg_replace('/\D/', '', $customer->phone);
+                
+                // Se não começar com 55 (código do Brasil), adicionar
+                if (!str_starts_with($phone, '55')) {
+                    $phone = '55' . $phone;
+                }
+
+                // Criar mensagem personalizada
+                $age = \Carbon\Carbon::parse($customer->birth_date)->age;
+                $birthdayDate = \Carbon\Carbon::parse($customer->birth_date);
+                $birthdayFormatted = $birthdayDate->format('d/m');
+                
+                $message = "🎉 *Parabéns {$customer->name}, pelos seus {$age} anos!* 🎉\n\n";
+                $message .= "Celebramos com você esta data especial ({$birthdayFormatted}) e desejamos que este novo ciclo seja repleto de realizações, saúde e muita felicidade!\n\n";
+                $message .= "Agradecemos sua confiança em nossos produtos e serviços.\n\n";
+                $message .= "*Feliz Aniversário!* 🎂✨";
+
+                // Enviar mensagem
+                $result = $evolutionApi->sendTextMessage($phone, $message);
+
+                if ($result['success']) {
+                    $successCount++;
+                    Log::info("Mensagem de aniversário enviada para {$customer->name} ({$phone})");
+                } else {
+                    $errorCount++;
+                    $errors[] = "{$customer->name}: " . ($result['message'] ?? 'Erro desconhecido');
+                    Log::error("Erro ao enviar mensagem de aniversário para {$customer->name}", [
+                        'phone' => $phone,
+                        'error' => $result['message'] ?? 'Erro desconhecido'
+                    ]);
+                }
+
+                // Pequeno delay entre mensagens para evitar rate limiting
+                usleep(500000); // 0.5 segundos
+
+            } catch (\Exception $e) {
+                $errorCount++;
+                $errors[] = "{$customer->name}: " . $e->getMessage();
+                Log::error("Exceção ao enviar mensagem de aniversário para {$customer->name}", [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+            }
+        }
+
+        $message = "Enviadas {$successCount} mensagem(s) com sucesso.";
+        if ($errorCount > 0) {
+            $message .= " {$errorCount} erro(s) ocorreram.";
+            if (count($errors) <= 5) {
+                $message .= " Erros: " . implode(', ', $errors);
+            }
+        }
+
+        $status = $errorCount === 0 ? 'success' : ($successCount > 0 ? 'warning' : 'error');
+        
+        return back()->with($status, $message);
     }
 }
 
