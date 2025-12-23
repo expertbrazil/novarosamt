@@ -23,6 +23,25 @@ class ImprovementsController extends Controller
             [
                 'version' => '1.0.0',
                 'date' => '2025-12-23',
+                'title' => 'Módulo de Banners',
+                'description' => 'Sistema completo de gerenciamento de banners para a página inicial do site.',
+                'features' => [
+                    'Cadastro completo de banners com título e imagens',
+                    'Suporte para imagens desktop (1920x600) e mobile separadas',
+                    'Ativação/desativação de banners individualmente',
+                    'Carrossel automático na página inicial com transições suaves',
+                    'Exibição inteligente: imagem mobile apenas em dispositivos móveis',
+                    'Sistema de navegação com setas e indicadores de posição',
+                    'Troca automática a cada 10 segundos',
+                    'Interface administrativa completa para gerenciar todos os banners'
+                ],
+                'icon' => 'M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6.75a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6.75v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z',
+                'category' => 'Funcionalidade',
+                'status' => 'active'
+            ],
+            [
+                'version' => '1.0.0',
+                'date' => '2025-12-23',
                 'title' => 'Integração com WhatsApp via Evolution API',
                 'description' => 'Sistema agora envia notificações automáticas via WhatsApp quando pedidos são criados.',
                 'features' => [
