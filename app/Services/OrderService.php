@@ -309,22 +309,39 @@ class OrderService
     /**
      * Envia notificações WhatsApp após criar pedido
      * - Envia notificação para o admin
-     * - Envia PDF do pedido para o cliente
+     * - Envia mensagem completa para o cliente
+     * 
+     * Se a Evolution API não estiver configurada ou desativada, apenas retorna sem enviar nada
      */
     protected function sendOrderNotifications(Order $order): void
     {
         try {
-            Log::info('Iniciando envio de notificações WhatsApp', ['order_id' => $order->id]);
+            // Verificar se Evolution API está configurada e ativada
+            $evolutionApi = $this->whatsappService->getEvolutionApi();
+            
+            // Verificar se está configurada
+            if (!$evolutionApi->isConfigured()) {
+                Log::info('Evolution API não está configurada ou desativada. Pedido criado normalmente sem envio de notificações WhatsApp.', [
+                    'order_id' => $order->id,
+                    'evolution_enabled' => Settings::get('evolution_api_enabled', '0')
+                ]);
+                return;
+            }
+            
+            // Verificar se está ativada
+            $evolutionEnabled = Settings::get('evolution_api_enabled', '0');
+            if ($evolutionEnabled !== '1' && $evolutionEnabled !== 1 && $evolutionEnabled !== true) {
+                Log::info('Evolution API está desativada. Pedido criado normalmente sem envio de notificações WhatsApp.', [
+                    'order_id' => $order->id,
+                    'evolution_enabled' => $evolutionEnabled
+                ]);
+                return;
+            }
+            
+            Log::info('Evolution API configurada e ativada. Iniciando envio de notificações WhatsApp', ['order_id' => $order->id]);
             
             // Carregar dados do pedido
             $order->load('items.product.category');
-            
-            // Verificar se Evolution API está configurada
-            $evolutionApi = $this->whatsappService->getEvolutionApi();
-            if (!$evolutionApi->isConfigured()) {
-                Log::warning('Evolution API não está configurada, notificações não serão enviadas', ['order_id' => $order->id]);
-                return;
-            }
             
             // 1. Enviar notificação para o admin
             $adminPhone = Settings::get('admin_whatsapp_number', '');
