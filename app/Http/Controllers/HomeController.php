@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\Settings;
 use App\Models\EstadoMunicipio;
+use App\Models\Banner;
 use Illuminate\Http\Request;
 
 class HomeController extends Controller
@@ -50,6 +51,11 @@ class HomeController extends Controller
             }
         }
 
+        // Buscar banners ativos
+        $activeBanners = Banner::where('is_active', true)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
         $useMobileLayout = request()->attributes->get('useMobileLayout', false);
         $viewPath = $useMobileLayout ? 'mobile.home.index' : 'home.index';
         return view($viewPath, [
@@ -58,6 +64,7 @@ class HomeController extends Controller
             'deliveryInfo' => $deliveryInfo,
             'deliveryCities' => $deliveryCities,
             'search' => $search,
+            'activeBanners' => $activeBanners,
         ]);
     }
 

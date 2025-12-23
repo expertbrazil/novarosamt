@@ -97,7 +97,7 @@
                         @if($banner->image_desktop)
                             <div class="mt-2 mb-2">
                                 <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">Imagem atual:</p>
-                                <img src="{{ Storage::url($banner->image_desktop) }}" 
+                                <img src="{{ asset('storage/' . $banner->image_desktop) }}" 
                                      alt="{{ $banner->title }}" 
                                      class="max-w-full h-32 object-cover rounded-lg border border-gray-300 dark:border-gray-600">
                             </div>
@@ -130,7 +130,7 @@
                         @if($banner->image_mobile)
                             <div class="mt-2 mb-2">
                                 <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">Imagem atual:</p>
-                                <img src="{{ Storage::url($banner->image_mobile) }}" 
+                                <img src="{{ asset('storage/' . $banner->image_mobile) }}" 
                                      alt="{{ $banner->title }}" 
                                      class="max-w-full h-32 object-cover rounded-lg border border-gray-300 dark:border-gray-600">
                             </div>
