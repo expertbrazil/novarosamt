@@ -15,6 +15,8 @@ use App\Http\Controllers\Admin\StockMovementController;
 use App\Http\Controllers\ManifestController;
 use App\Http\Controllers\Admin\PurchaseOrderController;
 use App\Http\Controllers\Admin\BackupController;
+use App\Http\Controllers\Admin\ImprovementsController;
+use App\Http\Controllers\Admin\BannerController;
 
 // PWA Manifest
 Route::get('/manifest.json', [ManifestController::class, 'index'])->name('manifest.json');
@@ -47,6 +49,9 @@ Route::post('/logout', [\App\Http\Controllers\Auth\LoginController::class, 'logo
 Route::middleware(['auth', 'role:admin|gerente|vendedor'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
     
+    // Melhorias e Atualizações (todos os usuários autenticados podem acessar)
+    Route::get('melhorias', [ImprovementsController::class, 'index'])->name('improvements.index');
+    
     // Perfil do usuário (todos os usuários autenticados podem acessar)
     Route::get('profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::put('profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -59,6 +64,9 @@ Route::middleware(['auth', 'role:admin|gerente|vendedor'])->prefix('admin')->nam
         Route::get('products/export/low-stock', [ProductController::class, 'exportLowStock'])->name('products.export.low-stock');
         Route::resource('categories', CategoryController::class)->except(['show']);
         Route::post('categories/{category}/toggle', [CategoryController::class, 'toggle'])->name('categories.toggle');
+        
+        Route::resource('banners', BannerController::class)->except(['show']);
+        Route::post('banners/{banner}/toggle', [BannerController::class, 'toggle'])->name('banners.toggle');
         
         Route::get('orders', [AdminOrderController::class, 'index'])->name('orders.index');
         Route::get('orders/create', [AdminOrderController::class, 'create'])->name('orders.create');

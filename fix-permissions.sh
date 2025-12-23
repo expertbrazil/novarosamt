@@ -1,26 +1,36 @@
 #!/bin/bash
 
-# Script para corrigir permissões dos diretórios storage e bootstrap/cache
-# Execute este script dentro do container ou no host
+# Script para ajustar permissões dos diretórios do Laravel
+# Execute com: sudo ./fix-permissions.sh
 
-echo "Corrigindo permissões..."
+echo "Ajustando permissões dos diretórios do Laravel..."
 
-# Criar diretórios se não existirem
-mkdir -p storage/framework/sessions
-mkdir -p storage/framework/views
-mkdir -p storage/framework/cache
-mkdir -p storage/logs
-mkdir -p bootstrap/cache
+# Definir usuário e grupo
+USER="expert"
+GROUP="www-data"
 
-# Ajustar permissões
-chmod -R 775 storage bootstrap/cache
-chown -R $(whoami):www-data storage bootstrap/cache 2>/dev/null || echo "Aviso: não foi possível alterar o proprietário (execute como root se necessário)"
+# Ajustar ownership
+echo "Ajustando ownership..."
+chown -R $USER:$GROUP storage bootstrap/cache
 
-echo "Permissões corrigidas!"
+# Ajustar permissões de diretórios
+echo "Ajustando permissões de diretórios..."
+find storage -type d -exec chmod 775 {} \;
+find bootstrap/cache -type d -exec chmod 775 {} \;
+
+# Ajustar permissões de arquivos
+echo "Ajustando permissões de arquivos..."
+find storage -type f -exec chmod 664 {} \;
+find bootstrap/cache -type f -exec chmod 664 {} \;
+
+# Garantir que o diretório banners existe e tem permissões corretas
+mkdir -p storage/app/public/banners
+chown -R $USER:$GROUP storage/app/public/banners
+chmod 775 storage/app/public/banners
+
+echo "Permissões ajustadas com sucesso!"
 echo ""
-echo "Para aplicar no container Docker, execute:"
-echo "docker-compose exec app bash /var/www/html/fix-permissions.sh"
-
-
-
-
+echo "Verificando permissões principais:"
+ls -la storage/ | head -5
+ls -la bootstrap/cache/ | head -5
+ls -la storage/app/public/banners/ 2>/dev/null | head -5
