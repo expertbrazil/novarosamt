@@ -22,8 +22,13 @@ class Settings extends Model
      */
     public static function get(string $key, $default = null)
     {
-        $setting = static::where('key', $key)->first();
-        return $setting ? $setting->value : $default;
+        try {
+            $setting = static::where('key', $key)->first();
+            return $setting ? $setting->value : $default;
+        } catch (\Throwable $e) {
+            // Se não conseguir conectar ao banco, retorna o valor padrão
+            return $default;
+        }
     }
 
     /**
@@ -31,14 +36,19 @@ class Settings extends Model
      */
     public static function set(string $key, $value, string $type = 'string', string $description = null)
     {
-        return static::updateOrCreate(
-            ['key' => $key],
-            [
-                'value' => $value,
-                'type' => $type,
-                'description' => $description,
-            ]
-        );
+        try {
+            return static::updateOrCreate(
+                ['key' => $key],
+                [
+                    'value' => $value,
+                    'type' => $type,
+                    'description' => $description,
+                ]
+            );
+        } catch (\Throwable $e) {
+            report($e);
+            return null;
+        }
     }
 
     /**
@@ -46,6 +56,11 @@ class Settings extends Model
      */
     public static function getAll()
     {
-        return static::pluck('value', 'key')->toArray();
+        try {
+            return static::pluck('value', 'key')->toArray();
+        } catch (\Throwable $e) {
+            // Se não conseguir conectar ao banco, retorna array vazio
+            return [];
+        }
     }
 }
