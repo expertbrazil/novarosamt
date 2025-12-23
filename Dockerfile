@@ -24,9 +24,12 @@ RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip && \
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # Create system user to run Composer and Artisan commands
-RUN useradd -G www-data,root -u 1000 -d /home/novarosamt novarosamt
+# Use UID 1000 to match the expert user on the host
+RUN useradd -G www-data,root -u 1000 -d /home/novarosamt -s /bin/bash novarosamt || \
+    (usermod -u 1000 -g www-data novarosamt 2>/dev/null || true)
 RUN mkdir -p /home/novarosamt/.composer && \
-    chown -R novarosamt:novarosamt /home/novarosamt
+    chown -R novarosamt:www-data /home/novarosamt && \
+    chown -R novarosamt:www-data /var/www/html 2>/dev/null || true
 
 # Set working directory
 WORKDIR /var/www/html

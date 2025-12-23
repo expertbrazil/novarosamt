@@ -10,7 +10,8 @@ class LoginController extends Controller
 {
     public function showLoginForm()
     {
-        return view('auth.login');
+        $settings = \App\Models\Settings::getAll();
+        return view('auth.login', compact('settings'));
     }
 
     public function login(Request $request)

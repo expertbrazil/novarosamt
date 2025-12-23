@@ -8,6 +8,7 @@ use App\Models\Settings;
 use App\Services\EvolutionApiService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 
 class CustomerController extends Controller
 {
@@ -363,11 +364,23 @@ class CustomerController extends Controller
     }
 
     /**
-     * Envia mensagens de parabéns para aniversariantes do mês
+     * Envia mensagens de parabéns para aniversariantes do mês (com progresso)
      */
     public function sendBirthdayMessages(Request $request)
     {
         $month = $request->integer('month', now()->month);
+        $progressKey = 'birthday_messages_progress_' . auth()->id() . '_' . $month;
+        
+        // Inicializar progresso
+        Cache::put($progressKey, [
+            'total' => 0,
+            'processed' => 0,
+            'success' => 0,
+            'errors' => 0,
+            'current' => null,
+            'status' => 'processing',
+            'message' => 'Iniciando...'
+        ], now()->addMinutes(30));
         
         // Buscar aniversariantes do mês com telefone
         $birthdayCustomers = Customer::whereNotNull('birth_date')
@@ -377,25 +390,56 @@ class CustomerController extends Controller
             ->get();
 
         if ($birthdayCustomers->isEmpty()) {
-            return back()->with('error', 'Nenhum aniversariante encontrado com telefone cadastrado para este mês.');
+            Cache::forget($progressKey);
+            return response()->json([
+                'success' => false,
+                'message' => 'Nenhum aniversariante encontrado com telefone cadastrado para este mês.'
+            ], 400);
         }
 
         $evolutionApi = new EvolutionApiService();
         
         if (!$evolutionApi->isConfigured()) {
-            return back()->with('error', 'Evolution API não está configurada. Configure em Parâmetros > Evolution API.');
+            Cache::forget($progressKey);
+            return response()->json([
+                'success' => false,
+                'message' => 'Evolution API não está configurada. Configure em Parâmetros > Evolution API.'
+            ], 400);
         }
 
+        // Atualizar total
+        Cache::put($progressKey, [
+            'total' => $birthdayCustomers->count(),
+            'processed' => 0,
+            'success' => 0,
+            'errors' => 0,
+            'current' => null,
+            'status' => 'processing',
+            'message' => 'Processando...'
+        ], now()->addMinutes(30));
+
+        // Processar em background (simulado com delay)
         $successCount = 0;
         $errorCount = 0;
         $errors = [];
+        $processed = 0;
 
         foreach ($birthdayCustomers as $customer) {
             try {
-                // Formatar telefone (remover caracteres não numéricos e adicionar código do país se necessário)
+                // Atualizar progresso antes de processar
+                $processed++;
+                Cache::put($progressKey, [
+                    'total' => $birthdayCustomers->count(),
+                    'processed' => $processed - 1, // Ainda não processou este
+                    'success' => $successCount,
+                    'errors' => $errorCount,
+                    'current' => $customer->name,
+                    'status' => 'processing',
+                    'message' => "Preparando envio para {$customer->name}..."
+                ], now()->addMinutes(30));
+
+                // Formatar telefone
                 $phone = preg_replace('/\D/', '', $customer->phone);
-                
-                // Se não começar com 55 (código do Brasil), adicionar
                 if (!str_starts_with($phone, '55')) {
                     $phone = '55' . $phone;
                 }
@@ -405,10 +449,27 @@ class CustomerController extends Controller
                 $birthdayDate = \Carbon\Carbon::parse($customer->birth_date);
                 $birthdayFormatted = $birthdayDate->format('d/m');
                 
-                $message = "🎉 *Parabéns {$customer->name}, pelos seus {$age} anos!* 🎉\n\n";
-                $message .= "Celebramos com você esta data especial ({$birthdayFormatted}) e desejamos que este novo ciclo seja repleto de realizações, saúde e muita felicidade!\n\n";
-                $message .= "Agradecemos sua confiança em nossos produtos e serviços.\n\n";
-                $message .= "*Feliz Aniversário!* 🎂✨";
+                // Buscar nome da empresa nas configurações
+                $companyName = Settings::get('company_name') 
+                    ?: Settings::get('smtp_from_name') 
+                    ?: config('app.name', 'Nova Rosa MT');
+                
+                $message = "🎉 *Parabéns, {$customer->name}!* 🎉\n\n";
+                $message .= "Sabemos que seu aniversário foi em {$birthdayFormatted}, mas nunca é tarde para celebrar mais um ano de vida! Que seus {$age} anos sejam marcados por saúde, sucesso e muitas conquistas.\n\n";
+                $message .= "Obrigado por fazer parte da nossa história e confiar no nosso trabalho.\n\n";
+                $message .= "*{$companyName}*\n";
+                $message .= "*Feliz aniversário!* 🎂✨";
+
+                // Atualizar progresso: enviando
+                Cache::put($progressKey, [
+                    'total' => $birthdayCustomers->count(),
+                    'processed' => $processed - 1,
+                    'success' => $successCount,
+                    'errors' => $errorCount,
+                    'current' => $customer->name . ' (enviando...)',
+                    'status' => 'processing',
+                    'message' => "Enviando mensagem para {$customer->name}..."
+                ], now()->addMinutes(30));
 
                 // Enviar mensagem
                 $result = $evolutionApi->sendTextMessage($phone, $message);
@@ -425,8 +486,31 @@ class CustomerController extends Controller
                     ]);
                 }
 
-                // Pequeno delay entre mensagens para evitar rate limiting
-                usleep(500000); // 0.5 segundos
+                // Atualizar progresso após envio
+                Cache::put($progressKey, [
+                    'total' => $birthdayCustomers->count(),
+                    'processed' => $processed,
+                    'success' => $successCount,
+                    'errors' => $errorCount,
+                    'current' => $customer->name . ' (enviado ✓)',
+                    'status' => 'processing',
+                    'message' => "Mensagem enviada para {$customer->name}. Aguardando 20 segundos..."
+                ], now()->addMinutes(30));
+
+                // Delay entre mensagens (20 segundos conforme solicitado)
+                // Atualizar progresso a cada segundo durante o delay
+                for ($i = 1; $i <= 20; $i++) {
+                    sleep(1);
+                    Cache::put($progressKey, [
+                        'total' => $birthdayCustomers->count(),
+                        'processed' => $processed,
+                        'success' => $successCount,
+                        'errors' => $errorCount,
+                        'current' => $customer->name . ' (aguardando ' . (20 - $i) . 's...)',
+                        'status' => 'processing',
+                        'message' => "Aguardando 20 segundos antes da próxima mensagem..."
+                    ], now()->addMinutes(30));
+                }
 
             } catch (\Exception $e) {
                 $errorCount++;
@@ -438,17 +522,53 @@ class CustomerController extends Controller
             }
         }
 
-        $message = "Enviadas {$successCount} mensagem(s) com sucesso.";
+        // Finalizar progresso
+        $finalMessage = "Enviadas {$successCount} mensagem(s) com sucesso.";
         if ($errorCount > 0) {
-            $message .= " {$errorCount} erro(s) ocorreram.";
-            if (count($errors) <= 5) {
-                $message .= " Erros: " . implode(', ', $errors);
-            }
+            $finalMessage .= " {$errorCount} erro(s) ocorreram.";
         }
 
-        $status = $errorCount === 0 ? 'success' : ($successCount > 0 ? 'warning' : 'error');
+        Cache::put($progressKey, [
+            'total' => $birthdayCustomers->count(),
+            'processed' => $processed,
+            'success' => $successCount,
+            'errors' => $errorCount,
+            'current' => null,
+            'status' => 'completed',
+            'message' => $finalMessage,
+            'errors_list' => $errors
+        ], now()->addMinutes(5));
+
+        return response()->json([
+            'success' => true,
+            'message' => $finalMessage,
+            'progress' => [
+                'total' => $birthdayCustomers->count(),
+                'processed' => $processed,
+                'success' => $successCount,
+                'errors' => $errorCount
+            ]
+        ]);
+    }
+
+    /**
+     * Retorna o progresso do envio em massa
+     */
+    public function getBirthdayMessagesProgress(Request $request)
+    {
+        $month = $request->integer('month', now()->month);
+        $progressKey = 'birthday_messages_progress_' . auth()->id() . '_' . $month;
         
-        return back()->with($status, $message);
+        $progress = Cache::get($progressKey);
+        
+        if (!$progress) {
+            return response()->json([
+                'status' => 'not_started',
+                'message' => 'Nenhum envio em andamento'
+            ]);
+        }
+
+        return response()->json($progress);
     }
 }
 

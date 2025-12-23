@@ -148,20 +148,16 @@
                 
                 @if(request()->filled('birthday_month'))
                     <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                        <form method="POST" action="{{ route('admin.customers.send-birthday-messages') }}" class="inline">
-                            @csrf
-                            <input type="hidden" name="month" value="{{ request('birthday_month') }}">
-                            <button type="submit" 
-                                    class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors duration-200"
-                                    onclick="return confirm('Deseja enviar mensagens de parabéns para todos os aniversariantes deste mês que possuem telefone cadastrado?')">
-                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"/>
-                                </svg>
-                                Enviar Mensagens de Parabéns
-                            </button>
-                        </form>
+                        <button type="button" 
+                                onclick="startBulkBirthdayMessages({{ request('birthday_month') }})"
+                                class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors duration-200">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"/>
+                            </svg>
+                            Enviar Mensagens de Parabéns
+                        </button>
                         <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                            Enviará mensagens via WhatsApp para todos os aniversariantes deste mês que possuem telefone cadastrado e estão ativos.
+                            Enviará mensagens via WhatsApp para todos os aniversariantes deste mês que possuem telefone cadastrado e estão ativos. Cada mensagem será enviada com intervalo de 20 segundos.
                         </p>
                     </div>
                 @endif
@@ -678,5 +674,187 @@ function previewBirthdayMessage(customerId, customerName) {
 function closeBirthdayModal() {
     document.getElementById('birthdayModal').classList.add('hidden');
 }
+
+// Modal de Progresso do Envio em Massa
+let progressInterval = null;
+
+function startBulkBirthdayMessages(month) {
+    if (!confirm('Deseja enviar mensagens de parabéns para todos os aniversariantes deste mês que possuem telefone cadastrado? Cada mensagem será enviada com intervalo de 20 segundos.')) {
+        return;
+    }
+    
+    // Mostrar modal de progresso
+    document.getElementById('bulkProgressModal').classList.remove('hidden');
+    document.getElementById('bulkProgressBar').style.width = '0%';
+    document.getElementById('bulkProgressBar').textContent = '0%';
+    document.getElementById('bulkProgressText').textContent = 'Iniciando...';
+    document.getElementById('bulkProgressDetails').textContent = '';
+    
+    // Iniciar polling do progresso imediatamente
+    startProgressPolling(month);
+    
+    // Iniciar envio (processamento assíncrono)
+    fetch(`{{ route('admin.customers.send-birthday-messages') }}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        body: JSON.stringify({ month: month })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data.success) {
+            alert(data.message || 'Erro ao iniciar envio');
+            closeBulkProgressModal();
+            return;
+        }
+        // Polling já está ativo, não precisa fazer nada aqui
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao iniciar envio de mensagens');
+        closeBulkProgressModal();
+    });
+}
+
+function startProgressPolling(month) {
+    if (progressInterval) {
+        clearInterval(progressInterval);
+    }
+    
+    // Primeira verificação imediata
+    checkProgress(month);
+    
+    // Depois verificar a cada segundo
+    progressInterval = setInterval(() => {
+        checkProgress(month);
+    }, 1000);
+}
+
+function checkProgress(month) {
+    fetch(`{{ route('admin.customers.birthday-messages-progress') }}?month=${month}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'not_started') {
+                // Se ainda não iniciou, aguardar um pouco mais
+                return;
+            }
+            
+            const total = data.total || 1;
+            const processed = data.processed || 0;
+            const success = data.success || 0;
+            const errors = data.errors || 0;
+            const percentage = Math.min(100, Math.round((processed / total) * 100));
+            
+            // Atualizar barra de progresso
+            document.getElementById('bulkProgressBar').style.width = percentage + '%';
+            document.getElementById('bulkProgressBar').textContent = percentage + '%';
+            document.getElementById('bulkProgressPercent').textContent = percentage + '%';
+            
+            // Atualizar texto
+            let statusText = `Processando: ${processed} de ${total} mensagens`;
+            if (data.current) {
+                statusText += ` - ${data.current}`;
+            }
+            document.getElementById('bulkProgressText').textContent = statusText;
+            
+            // Atualizar detalhes
+            let details = `✓ Sucesso: ${success} | ✗ Erros: ${errors}`;
+            if (data.current) {
+                details += `\n📤 ${data.current}`;
+            }
+            if (data.message && data.message !== 'Processando...') {
+                details += `\n\n${data.message}`;
+            }
+            document.getElementById('bulkProgressDetails').textContent = details;
+            
+            // Se concluído
+            if (data.status === 'completed') {
+                if (progressInterval) {
+                    clearInterval(progressInterval);
+                    progressInterval = null;
+                }
+                document.getElementById('bulkProgressText').textContent = data.message || 'Concluído!';
+                document.getElementById('bulkProgressBar').classList.remove('bg-blue-600');
+                document.getElementById('bulkProgressBar').classList.add('bg-green-600');
+                
+                // Mostrar erros se houver
+                if (data.errors_list && data.errors_list.length > 0) {
+                    let errorsText = 'Erros encontrados:\n' + data.errors_list.slice(0, 5).join('\n');
+                    if (data.errors_list.length > 5) {
+                        errorsText += `\n... e mais ${data.errors_list.length - 5} erro(s)`;
+                    }
+                    document.getElementById('bulkProgressDetails').textContent = details + '\n\n' + errorsText;
+                }
+                
+                // Fechar automaticamente após 10 segundos
+                setTimeout(() => {
+                    closeBulkProgressModal();
+                    location.reload();
+                }, 10000);
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao buscar progresso:', error);
+        });
+}
+
+function closeBulkProgressModal() {
+    if (progressInterval) {
+        clearInterval(progressInterval);
+        progressInterval = null;
+    }
+    document.getElementById('bulkProgressModal').classList.add('hidden');
+    document.getElementById('bulkProgressBar').classList.remove('bg-green-600');
+    document.getElementById('bulkProgressBar').classList.add('bg-blue-600');
+    document.getElementById('bulkProgressBar').style.width = '0%';
+    document.getElementById('bulkProgressBar').textContent = '0%';
+}
 </script>
+
+<!-- Modal de Progresso do Envio em Massa -->
+<div id="bulkProgressModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-2/3 lg:w-1/2 shadow-lg rounded-md bg-white dark:bg-gray-800">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                    Enviando Mensagens de Parabéns
+                </h3>
+                <button onclick="closeBulkProgressModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Barra de Progresso -->
+            <div class="mb-4">
+                <div class="flex justify-between items-center mb-2">
+                    <span id="bulkProgressText" class="text-sm font-medium text-gray-700 dark:text-gray-300">Iniciando...</span>
+                    <span id="bulkProgressPercent" class="text-sm font-medium text-gray-700 dark:text-gray-300">0%</span>
+                </div>
+                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 overflow-hidden">
+                    <div id="bulkProgressBar" 
+                         class="bg-blue-600 h-4 rounded-full transition-all duration-300 text-white text-xs flex items-center justify-center"
+                         style="width: 0%; min-width: 0%;">
+                        0%
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Detalhes -->
+            <div class="mb-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                <pre id="bulkProgressDetails" class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap font-mono"></pre>
+            </div>
+            
+            <div class="flex justify-end">
+                <button onclick="closeBulkProgressModal()" 
+                        class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+                    Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection

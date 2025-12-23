@@ -22,5 +22,17 @@ mkdir -p /var/www/html/storage/app/public/banners
 chown -R novarosamt:www-data /var/www/html/storage/app/public/banners
 chmod 775 /var/www/html/storage/app/public/banners
 
+# Ajustar permissões do diretório app (especialmente Jobs, Models, Controllers)
+if [ -d "/var/www/html/app" ]; then
+    chown -R novarosamt:www-data /var/www/html/app
+    find /var/www/html/app -type d -exec chmod 775 {} \;
+    find /var/www/html/app -type f -exec chmod 664 {} \;
+fi
+
+# Garantir que o diretório Jobs existe e tem permissões corretas
+mkdir -p /var/www/html/app/Jobs
+chown -R novarosamt:www-data /var/www/html/app/Jobs
+chmod 775 /var/www/html/app/Jobs
+
 echo "Permissões ajustadas com sucesso!"
 

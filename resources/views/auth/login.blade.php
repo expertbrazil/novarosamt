@@ -1,3 +1,6 @@
+@php
+    use Illuminate\Support\Facades\Storage;
+@endphp
 <!DOCTYPE html>
 <html lang="pt-BR" class="h-full">
 <head>
@@ -67,12 +70,18 @@
     <div class="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
         <div class="max-w-md w-full space-y-8">
             <!-- Logo -->
-            <div class="text-center">
+            <div class="text-center mb-6">
                 <div class="logo-animation inline-block">
-                    <svg class="w-16 h-16 mx-auto text-indigo-400" fill="currentColor" viewBox="0 0 100 100">
-                        <path d="M20 30 Q50 10 80 30 Q50 50 20 30 Z" opacity="0.8"/>
-                        <path d="M20 50 Q50 30 80 50 Q50 70 20 50 Z" opacity="0.6"/>
-                    </svg>
+                    @if(isset($settings['logo']) && $settings['logo'])
+                        <img src="{{ Storage::url($settings['logo']) }}" 
+                             alt="Logo da Empresa" 
+                             class="h-24 w-auto mx-auto object-contain">
+                    @else
+                        <svg class="w-16 h-16 mx-auto text-indigo-400" fill="currentColor" viewBox="0 0 100 100">
+                            <path d="M20 30 Q50 10 80 30 Q50 50 20 30 Z" opacity="0.8"/>
+                            <path d="M20 50 Q50 30 80 50 Q50 70 20 50 Z" opacity="0.6"/>
+                        </svg>
+                    @endif
                 </div>
             </div>
 
