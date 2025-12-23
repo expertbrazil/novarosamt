@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class AppServiceProvider extends ServiceProvider
@@ -35,69 +36,87 @@ class AppServiceProvider extends ServiceProvider
         date_default_timezone_set($timezone);
         
         // Ajusta SMTP com base nos parâmetros do admin
-        if (Schema::hasTable('settings')) {
-            try {
-                $mailConfig = [];
+        try {
+            // Verificar se a conexão com o banco está disponível antes de tentar usar
+            DB::connection()->getPdo();
+            
+            if (Schema::hasTable('settings')) {
+                try {
+                    $mailConfig = [];
 
-                $smtpHost = Settings::get('smtp_host');
-                $smtpPort = Settings::get('smtp_port');
-                $smtpUsername = Settings::get('smtp_username');
-                $smtpPassword = Settings::get('smtp_password');
-                $smtpEncryption = Settings::get('smtp_encryption');
-                $smtpFromAddress = Settings::get('smtp_from_address');
-                $smtpFromName = Settings::get('smtp_from_name');
+                    $smtpHost = Settings::get('smtp_host');
+                    $smtpPort = Settings::get('smtp_port');
+                    $smtpUsername = Settings::get('smtp_username');
+                    $smtpPassword = Settings::get('smtp_password');
+                    $smtpEncryption = Settings::get('smtp_encryption');
+                    $smtpFromAddress = Settings::get('smtp_from_address');
+                    $smtpFromName = Settings::get('smtp_from_name');
 
-                if (!empty($smtpHost)) {
-                    $mailConfig['mail.mailers.smtp.host'] = $smtpHost;
+                    if (!empty($smtpHost)) {
+                        $mailConfig['mail.mailers.smtp.host'] = $smtpHost;
+                    }
+                    if (!empty($smtpPort)) {
+                        $mailConfig['mail.mailers.smtp.port'] = (int) $smtpPort;
+                    }
+                    if (!empty($smtpUsername)) {
+                        $mailConfig['mail.mailers.smtp.username'] = $smtpUsername;
+                    }
+                    if (!empty($smtpPassword)) {
+                        $mailConfig['mail.mailers.smtp.password'] = $smtpPassword;
+                    }
+                    if (!empty($smtpEncryption)) {
+                        $mailConfig['mail.mailers.smtp.encryption'] = $smtpEncryption;
+                    }
+                    if (!empty($smtpFromAddress)) {
+                        $mailConfig['mail.from.address'] = $smtpFromAddress;
+                    }
+                    if (!empty($smtpFromName)) {
+                        $mailConfig['mail.from.name'] = $smtpFromName;
+                    }
+                    if (!empty($mailConfig)) {
+                        $mailConfig['mail.default'] = 'smtp';
+                        Config::set($mailConfig);
+                    }
+                } catch (\Throwable $e) {
+                    report($e);
                 }
-                if (!empty($smtpPort)) {
-                    $mailConfig['mail.mailers.smtp.port'] = (int) $smtpPort;
-                }
-                if (!empty($smtpUsername)) {
-                    $mailConfig['mail.mailers.smtp.username'] = $smtpUsername;
-                }
-                if (!empty($smtpPassword)) {
-                    $mailConfig['mail.mailers.smtp.password'] = $smtpPassword;
-                }
-                if (!empty($smtpEncryption)) {
-                    $mailConfig['mail.mailers.smtp.encryption'] = $smtpEncryption;
-                }
-                if (!empty($smtpFromAddress)) {
-                    $mailConfig['mail.from.address'] = $smtpFromAddress;
-                }
-                if (!empty($smtpFromName)) {
-                    $mailConfig['mail.from.name'] = $smtpFromName;
-                }
-                if (!empty($mailConfig)) {
-                    $mailConfig['mail.default'] = 'smtp';
-                    Config::set($mailConfig);
-                }
-            } catch (\Throwable $e) {
-                report($e);
             }
+        } catch (\Throwable $e) {
+            // Se não conseguir conectar ao banco, apenas registra o erro mas não quebra a aplicação
+            report($e);
         }
 
         // Share settings with all views
         View::composer('*', function ($view) {
-            $settings = Settings::getAll();
-            $view->with('settings', $settings);
-            
-            // Buscar cidades de entrega para o footer
-            $deliveryCities = collect([]);
-            $deliveryCitiesJson = Settings::get('delivery_cities', '[]');
-            if ($deliveryCitiesJson) {
-                $decoded = json_decode($deliveryCitiesJson, true) ?? [];
-                if (is_array($decoded)) {
-                    foreach ($decoded as $cityData) {
-                        $municipioId = $cityData['municipio_id'] ?? $cityData;
-                        $municipio = EstadoMunicipio::find($municipioId);
-                        if ($municipio) {
-                            $deliveryCities->push($municipio);
+            try {
+                // Verificar se a conexão com o banco está disponível
+                DB::connection()->getPdo();
+                
+                $settings = Settings::getAll();
+                $view->with('settings', $settings);
+                
+                // Buscar cidades de entrega para o footer
+                $deliveryCities = collect([]);
+                $deliveryCitiesJson = Settings::get('delivery_cities', '[]');
+                if ($deliveryCitiesJson) {
+                    $decoded = json_decode($deliveryCitiesJson, true) ?? [];
+                    if (is_array($decoded)) {
+                        foreach ($decoded as $cityData) {
+                            $municipioId = $cityData['municipio_id'] ?? $cityData;
+                            $municipio = EstadoMunicipio::find($municipioId);
+                            if ($municipio) {
+                                $deliveryCities->push($municipio);
+                            }
                         }
                     }
                 }
+                $view->with('footerDeliveryCities', $deliveryCities);
+            } catch (\Throwable $e) {
+                // Se não conseguir conectar ao banco, usa valores padrão
+                $view->with('settings', []);
+                $view->with('footerDeliveryCities', collect([]));
+                report($e);
             }
-            $view->with('footerDeliveryCities', $deliveryCities);
         });
     }
 }
