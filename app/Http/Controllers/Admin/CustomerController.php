@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
+use App\Models\Settings;
 use App\Services\EvolutionApiService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -272,9 +273,15 @@ class CustomerController extends Controller
         $birthdayDate = \Carbon\Carbon::parse($customer->birth_date);
         $birthdayFormatted = $birthdayDate->format('d/m');
         
+        // Buscar nome da empresa nas configurações
+        $companyName = Settings::get('company_name') 
+            ?: Settings::get('smtp_from_name') 
+            ?: config('app.name', 'Nova Rosa MT');
+        
         $message = "🎉 *Parabéns, {$customer->name}!* 🎉\n\n";
         $message .= "Sabemos que seu aniversário foi em {$birthdayFormatted}, mas nunca é tarde para celebrar mais um ano de vida! Que seus {$age} anos sejam marcados por saúde, sucesso e muitas conquistas.\n\n";
         $message .= "Obrigado por fazer parte da nossa história e confiar no nosso trabalho.\n\n";
+        $message .= "*{$companyName}*\n";
         $message .= "*Feliz aniversário!* 🎂✨";
 
         return response()->json([
@@ -320,9 +327,15 @@ class CustomerController extends Controller
                 $birthdayDate = \Carbon\Carbon::parse($customer->birth_date);
                 $birthdayFormatted = $birthdayDate->format('d/m');
                 
+                // Buscar nome da empresa nas configurações
+                $companyName = Settings::get('company_name') 
+                    ?: Settings::get('smtp_from_name') 
+                    ?: config('app.name', 'Nova Rosa MT');
+                
                 $message = "🎉 *Parabéns, {$customer->name}!* 🎉\n\n";
                 $message .= "Sabemos que seu aniversário foi em {$birthdayFormatted}, mas nunca é tarde para celebrar mais um ano de vida! Que seus {$age} anos sejam marcados por saúde, sucesso e muitas conquistas.\n\n";
                 $message .= "Obrigado por fazer parte da nossa história e confiar no nosso trabalho.\n\n";
+                $message .= "*{$companyName}*\n";
                 $message .= "*Feliz aniversário!* 🎂✨";
             }
 
