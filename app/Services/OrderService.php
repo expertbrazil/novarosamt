@@ -6,6 +6,7 @@ use App\Models\Order;
 use App\Models\Customer;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\Settings;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -153,8 +154,34 @@ class OrderService
                 // NÃO dar baixa no estoque aqui - será dado apenas quando status for "entregue"
             }
 
-            // Enviar via WhatsApp
-            $this->whatsappService->sendOrder($order);
+            // Enviar notificações via WhatsApp após criar pedido (apenas para pedidos do site público)
+            // Verifica se é uma rota do site público ou se não tem customer_id (novo cliente)
+            $currentRoute = request()->route() ? request()->route()->getName() : 'unknown';
+            $isPublicOrder = request()->routeIs('order.store') || 
+                           (empty($data['customer_id']) && !request()->routeIs('admin.orders.store'));
+            
+            Log::info('Verificando se deve enviar notificações', [
+                'order_id' => $order->id,
+                'current_route' => $currentRoute,
+                'is_public_order' => $isPublicOrder,
+                'has_customer_id' => !empty($data['customer_id']),
+                'route_is_order_store' => request()->routeIs('order.store')
+            ]);
+            
+            if ($isPublicOrder) {
+                Log::info('Enviando notificações WhatsApp para pedido do site público', ['order_id' => $order->id]);
+                try {
+                    $this->sendOrderNotifications($order);
+                } catch (\Exception $e) {
+                    Log::error('Erro ao enviar notificações WhatsApp após criar pedido', [
+                        'order_id' => $order->id,
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString()
+                    ]);
+                }
+            } else {
+                Log::info('Notificações não serão enviadas (pedido do admin)', ['order_id' => $order->id]);
+            }
 
             return $order->load('items.product');
         });
@@ -277,6 +304,231 @@ class OrderService
         }
 
         return $reversed;
+    }
+
+    /**
+     * Envia notificações WhatsApp após criar pedido
+     * - Envia notificação para o admin
+     * - Envia PDF do pedido para o cliente
+     */
+    protected function sendOrderNotifications(Order $order): void
+    {
+        try {
+            Log::info('Iniciando envio de notificações WhatsApp', ['order_id' => $order->id]);
+            
+            // Carregar dados do pedido
+            $order->load('items.product.category');
+            
+            // Verificar se Evolution API está configurada
+            $evolutionApi = $this->whatsappService->getEvolutionApi();
+            if (!$evolutionApi->isConfigured()) {
+                Log::warning('Evolution API não está configurada, notificações não serão enviadas', ['order_id' => $order->id]);
+                return;
+            }
+            
+            // 1. Enviar notificação para o admin
+            $adminPhone = Settings::get('admin_whatsapp_number', '');
+            Log::info('=== ENVIANDO PARA ADMIN ===', [
+                'order_id' => $order->id,
+                'admin_phone' => $adminPhone,
+                'admin_phone_formatted' => $adminPhone ?: 'NÃO CONFIGURADO'
+            ]);
+            
+            if (!empty($adminPhone)) {
+                try {
+                    $adminMessage = $this->formatAdminNotification($order);
+                    Log::info('Mensagem do admin preparada', [
+                        'order_id' => $order->id,
+                        'message_preview' => substr($adminMessage, 0, 100) . '...',
+                        'destino' => $adminPhone
+                    ]);
+                    
+                    $result = $evolutionApi->sendTextMessage($adminPhone, $adminMessage);
+                    
+                    if ($result['success']) {
+                        Log::info('✅ Notificação de pedido enviada para ADMIN com sucesso', [
+                            'order_id' => $order->id, 
+                            'phone' => $adminPhone,
+                            'message_type' => 'ADMIN_NOTIFICATION'
+                        ]);
+                    } else {
+                        Log::error('❌ Erro ao enviar notificação para ADMIN', [
+                            'order_id' => $order->id,
+                            'phone' => $adminPhone,
+                            'error' => $result['error'] ?? 'Erro desconhecido'
+                        ]);
+                    }
+                } catch (\Exception $e) {
+                    Log::error('❌ Exceção ao enviar notificação para ADMIN', [
+                        'order_id' => $order->id,
+                        'phone' => $adminPhone,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            } else {
+                Log::warning('⚠️ Número do admin não configurado', ['order_id' => $order->id]);
+            }
+            
+            // 2. Enviar mensagem completa para o cliente (com produtos, valor e PIX)
+            $customerPhone = $order->customer_phone;
+            Log::info('=== ENVIANDO PARA CLIENTE ===', [
+                'order_id' => $order->id,
+                'customer_phone' => $customerPhone ?: 'não informado',
+                'customer_name' => $order->customer_name
+            ]);
+            
+            if (!empty($customerPhone)) {
+                try {
+                    $customerMessage = $this->formatCustomerMessage($order);
+                    Log::info('Mensagem do cliente preparada', [
+                        'order_id' => $order->id,
+                        'message_preview' => substr($customerMessage, 0, 100) . '...',
+                        'destino' => $customerPhone
+                    ]);
+                    
+                    // Enviar mensagem completa com produtos e informações de pagamento
+                    $textResult = $evolutionApi->sendTextMessage($customerPhone, $customerMessage);
+                    
+                    if ($textResult['success']) {
+                        Log::info('✅ Mensagem completa enviada para CLIENTE com sucesso', [
+                            'order_id' => $order->id,
+                            'phone' => $customerPhone,
+                            'message_type' => 'CUSTOMER_CONFIRMATION'
+                        ]);
+                    } else {
+                        Log::error('❌ Erro ao enviar mensagem para CLIENTE', [
+                            'order_id' => $order->id,
+                            'phone' => $customerPhone,
+                            'error' => $textResult['error'] ?? 'Erro desconhecido'
+                        ]);
+                    }
+                } catch (\Exception $e) {
+                    Log::error('❌ Exceção ao enviar notificação para CLIENTE', [
+                        'order_id' => $order->id,
+                        'phone' => $customerPhone,
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString()
+                    ]);
+                }
+            } else {
+                Log::warning('⚠️ Telefone do cliente não informado', ['order_id' => $order->id]);
+            }
+        } catch (\Exception $e) {
+            Log::error('Erro geral ao enviar notificações WhatsApp do pedido', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            // Não lançar exceção para não interromper a criação do pedido
+        }
+    }
+
+    /**
+     * Formata mensagem simples de notificação para o admin
+     */
+    protected function formatAdminNotification(Order $order): string
+    {
+        $totalFormatted = number_format($order->total, 2, ',', '.');
+        $dateFormatted = $order->created_at->format('d/m/Y H:i');
+
+        return <<<MESSAGE
+🔔 *NOVO PEDIDO RECEBIDO!*
+
+O cliente *{$order->customer_name}* fez um novo pedido.
+
+📦 Pedido #{$order->id}
+💰 Valor: R$ {$totalFormatted}
+📅 Data: {$dateFormatted}
+
+Acesse o sistema para ver os detalhes completos.
+MESSAGE;
+    }
+
+    /**
+     * Formata mensagem completa para o cliente com produtos, valor e PIX
+     */
+    protected function formatCustomerMessage(Order $order): string
+    {
+        // Formatar itens do pedido
+        $items = $order->items->map(function ($item, $index) {
+            $product = $item->product;
+            $unitInfo = '';
+            
+            if ($product->unit && $product->unit_value) {
+                $unitInfo = " ({$product->unit_value} {$product->unit})";
+            }
+            
+            $priceUnit = number_format($item->price, 2, ',', '.');
+            $subtotal = number_format($item->subtotal, 2, ',', '.');
+            
+            return ($index + 1) . ". *{$product->name}*{$unitInfo}\n   Qtd: {$item->quantity} x R$ {$priceUnit} = R$ {$subtotal}";
+        })->implode("\n\n");
+
+        $totalFormatted = number_format($order->total, 2, ',', '.');
+        $dateFormatted = $order->created_at->format('d/m/Y H:i');
+        
+        // Buscar informações de pagamento PIX
+        $pixKey = Settings::get('payment_pix_key', '');
+        $pixRecipient = Settings::get('payment_recipient_name', '');
+        $adminWhatsApp = Settings::get('admin_whatsapp_number', '');
+        
+        // Formatar número do WhatsApp para exibição
+        $adminWhatsAppDisplay = $adminWhatsApp;
+        if (!empty($adminWhatsApp) && strlen($adminWhatsApp) >= 11) {
+            // Formatar como (XX) XXXXX-XXXX ou (XX) XXXX-XXXX
+            if (strlen($adminWhatsApp) == 13) {
+                $adminWhatsAppDisplay = '(' . substr($adminWhatsApp, 2, 2) . ') ' . substr($adminWhatsApp, 4, 5) . '-' . substr($adminWhatsApp, 9);
+            } elseif (strlen($adminWhatsApp) == 12) {
+                $adminWhatsAppDisplay = '(' . substr($adminWhatsApp, 2, 2) . ') ' . substr($adminWhatsApp, 4, 4) . '-' . substr($adminWhatsApp, 8);
+            }
+        }
+
+        $pixSection = '';
+        if (!empty($pixKey)) {
+            $pixSection = "\n━━━━━━━━━━━━━━━━━━━━\n";
+            $pixSection .= "💳 *PAGAMENTO PIX*\n\n";
+            if (!empty($pixRecipient)) {
+                $pixSection .= "Favorecido: {$pixRecipient}\n";
+            }
+            $pixSection .= "Chave PIX: *{$pixKey}*\n";
+            $pixSection .= "Valor: *R$ {$totalFormatted}*";
+        }
+
+        $comprovanteSection = '';
+        if (!empty($adminWhatsApp)) {
+            $comprovanteSection = "\n━━━━━━━━━━━━━━━━━━━━\n";
+            $comprovanteSection .= "📤 *ENVIE O COMPROVANTE*\n\n";
+            $comprovanteSection .= "Após realizar o pagamento, envie o comprovante para:\n";
+            $comprovanteSection .= "📱 WhatsApp: {$adminWhatsAppDisplay}";
+        }
+
+        return <<<MESSAGE
+✅ *Pedido Confirmado!*
+
+Olá, {$order->customer_name}!
+
+Seu pedido #{$order->id} foi recebido com sucesso.
+
+━━━━━━━━━━━━━━━━━━━━
+*ITENS DO PEDIDO*
+
+{$items}
+
+━━━━━━━━━━━━━━━━━━━━
+💰 *VALOR TOTAL: R$ {$totalFormatted}*
+📅 *Data: {$dateFormatted}*{$pixSection}{$comprovanteSection}
+
+Obrigado pela preferência! 🛒
+MESSAGE;
+    }
+
+    /**
+     * Retorna URL do PDF do pedido usando a rota existente
+     */
+    protected function getOrderPdfUrl(Order $order): string
+    {
+        // Usa a rota existente de PDF do admin
+        return route('admin.orders.pdf', $order);
     }
 }
 

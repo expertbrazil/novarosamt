@@ -45,8 +45,20 @@
         [
             'name' => 'Parâmetros',
             'href' => route('admin.settings.index'),
-            'current' => request()->routeIs('admin.settings.*'),
+            'current' => request()->routeIs('admin.settings.*') && !request()->routeIs('admin.evolution-api.*'),
             'icon' => 'M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281zM15 12a3 3 0 11-6 0 3 3 0 016 0z',
+            'children' => [
+                [
+                    'name' => 'Configurações Gerais',
+                    'href' => route('admin.settings.index'),
+                    'current' => request()->routeIs('admin.settings.*') && !request()->routeIs('admin.evolution-api.*'),
+                ],
+                [
+                    'name' => 'Evolution API',
+                    'href' => route('admin.evolution-api.index'),
+                    'current' => request()->routeIs('admin.evolution-api.*'),
+                ],
+            ],
         ],
         [
             'name' => 'Backups',
@@ -63,18 +75,60 @@
             <ul role="list" class="-mx-2 space-y-1">
                 @foreach ($navigation as $item)
                     <li>
-                        <a href="{{ $item['href'] }}" 
-                           class="group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold transition-colors duration-200 ease-in-out
-                                  {{ $item['current'] 
-                                     ? 'bg-indigo-700 text-white' 
-                                     : 'text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-50 dark:hover:bg-gray-800' }}"
-                           aria-current="{{ $item['current'] ? 'page' : 'false' }}">
-                            <svg class="h-6 w-6 shrink-0 {{ $item['current'] ? 'text-white' : 'text-gray-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400' }}" 
-                                 fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="{{ $item['icon'] }}" />
-                            </svg>
-                            {{ $item['name'] }}
-                        </a>
+                        @if(isset($item['children']) && count($item['children']) > 0)
+                            {{-- Item com submenu --}}
+                            @php
+                                $hasActiveChild = collect($item['children'])->contains(function($child) {
+                                    return $child['current'] ?? false;
+                                });
+                                $submenuOpen = $item['current'] || $hasActiveChild;
+                            @endphp
+                            <div class="submenu-container" data-open="{{ $submenuOpen ? 'true' : 'false' }}">
+                                <button type="button" 
+                                        class="submenu-toggle group flex w-full gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold transition-colors duration-200 ease-in-out
+                                               {{ $item['current'] || $hasActiveChild
+                                                  ? 'bg-indigo-700 text-white' 
+                                                  : 'text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-50 dark:hover:bg-gray-800' }}">
+                                    <svg class="h-6 w-6 shrink-0 {{ $item['current'] || $hasActiveChild ? 'text-white' : 'text-gray-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400' }}" 
+                                         fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="{{ $item['icon'] }}" />
+                                    </svg>
+                                    {{ $item['name'] }}
+                                    <svg class="submenu-arrow ml-auto h-5 w-5 shrink-0 text-gray-400 transition-transform duration-300 ease-in-out {{ ($item['current'] || $hasActiveChild) ? 'rotate-90 text-white' : '' }}" 
+                                         fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                                    </svg>
+                                </button>
+                                <ul class="submenu-list mt-1 ml-8 space-y-1 overflow-hidden transition-[max-height,opacity] duration-300 ease-in-out" style="{{ $submenuOpen ? '' : 'max-height: 0; opacity: 0;' }}">
+                                    @foreach($item['children'] as $child)
+                                        <li>
+                                            <a href="{{ $child['href'] }}" 
+                                               class="block rounded-md px-3 py-2 text-sm leading-6 font-medium transition-colors duration-200 ease-in-out
+                                                      {{ $child['current'] 
+                                                         ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300' 
+                                                         : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-indigo-600 dark:hover:text-indigo-400' }}"
+                                               aria-current="{{ $child['current'] ? 'page' : 'false' }}">
+                                                {{ $child['name'] }}
+                                            </a>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @else
+                            {{-- Item sem submenu --}}
+                            <a href="{{ $item['href'] }}" 
+                               class="group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold transition-colors duration-200 ease-in-out
+                                      {{ $item['current'] 
+                                         ? 'bg-indigo-700 text-white' 
+                                         : 'text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-gray-50 dark:hover:bg-gray-800' }}"
+                               aria-current="{{ $item['current'] ? 'page' : 'false' }}">
+                                <svg class="h-6 w-6 shrink-0 {{ $item['current'] ? 'text-white' : 'text-gray-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400' }}" 
+                                     fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="{{ $item['icon'] }}" />
+                                </svg>
+                                {{ $item['name'] }}
+                            </a>
+                        @endif
                     </li>
                 @endforeach
             </ul>
@@ -134,6 +188,86 @@
         © {{ date('Y') }} Nova Rosa MT. Todos os direitos reservados.
     </p>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Função para calcular altura real do submenu
+    function getSubmenuHeight(list) {
+        // Temporariamente remover max-height para medir
+        const currentMaxHeight = list.style.maxHeight;
+        list.style.maxHeight = 'none';
+        const height = list.scrollHeight;
+        list.style.maxHeight = currentMaxHeight;
+        return height;
+    }
+    
+    // Toggle submenu com animação suave
+    document.querySelectorAll('.submenu-toggle').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const container = this.closest('.submenu-container');
+            const list = container.querySelector('.submenu-list');
+            const arrow = container.querySelector('.submenu-arrow');
+            const isOpen = container.getAttribute('data-open') === 'true';
+            
+            if (isOpen) {
+                // Fechar submenu
+                const height = getSubmenuHeight(list);
+                list.style.maxHeight = height + 'px';
+                // Força reflow
+                list.offsetHeight;
+                list.style.maxHeight = '0px';
+                list.style.opacity = '0';
+                arrow.classList.remove('rotate-90');
+                container.setAttribute('data-open', 'false');
+                
+                // Limpar estilos inline após animação
+                setTimeout(() => {
+                    list.style.maxHeight = '';
+                    list.style.opacity = '';
+                }, 300);
+            } else {
+                // Abrir submenu
+                const height = getSubmenuHeight(list);
+                list.style.maxHeight = '0px';
+                list.style.opacity = '0';
+                // Força reflow
+                list.offsetHeight;
+                list.style.maxHeight = height + 'px';
+                list.style.opacity = '1';
+                arrow.classList.add('rotate-90');
+                container.setAttribute('data-open', 'true');
+                
+                // Limpar estilos inline após animação
+                setTimeout(() => {
+                    list.style.maxHeight = '';
+                    list.style.opacity = '';
+                }, 300);
+            }
+        });
+    });
+    
+    // Inicializar estado dos submenus
+    document.querySelectorAll('.submenu-container').forEach(container => {
+        const isOpen = container.getAttribute('data-open') === 'true';
+        const list = container.querySelector('.submenu-list');
+        const arrow = container.querySelector('.submenu-arrow');
+        
+        if (isOpen) {
+            // Submenu aberto - garantir que está visível
+            const height = getSubmenuHeight(list);
+            list.style.maxHeight = height + 'px';
+            list.style.opacity = '1';
+            arrow.classList.add('rotate-90');
+        } else {
+            // Submenu fechado
+            list.style.maxHeight = '0px';
+            list.style.opacity = '0';
+            arrow.classList.remove('rotate-90');
+        }
+    });
+});
+</script>
 
 
 

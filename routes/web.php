@@ -103,6 +103,12 @@ Route::middleware(['auth', 'role:admin|gerente|vendedor'])->prefix('admin')->nam
         Route::get('settings', [SettingsController::class, 'index'])->name('settings.index');
         Route::put('settings', [SettingsController::class, 'update'])->name('settings.update');
         Route::get('settings/municipios/{estado}', [SettingsController::class, 'getMunicipios'])->name('settings.municipios');
+        
+        // Evolution API
+        Route::get('evolution-api', [\App\Http\Controllers\Admin\EvolutionApiController::class, 'index'])->name('evolution-api.index');
+        Route::put('evolution-api', [\App\Http\Controllers\Admin\EvolutionApiController::class, 'update'])->name('evolution-api.update');
+        Route::post('evolution-api/test-connection', [\App\Http\Controllers\Admin\EvolutionApiController::class, 'testConnection'])->name('evolution-api.test-connection');
+        Route::post('evolution-api/disconnect', [\App\Http\Controllers\Admin\EvolutionApiController::class, 'disconnect'])->name('evolution-api.disconnect');
 
         // Backups
         Route::get('backups', [BackupController::class, 'index'])->name('backups.index');

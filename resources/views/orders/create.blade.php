@@ -36,17 +36,6 @@
                     @enderror
                 </div>
 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1" id="document_label">Nome Completo *</label>
-                    <input type="text" id="customer_name" name="customer_name" value="{{ old('customer_name') }}" required
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 @error('customer_name') border-red-500 @enderror">
-                    @error('customer_name')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                 <!-- CPF (Pessoa Física) -->
                 <div id="cpf_group">
                     <label class="block text-sm font-medium text-gray-700 mb-1">CPF *</label>
@@ -71,6 +60,17 @@
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror
                     <p id="cnpj-validation-message" class="mt-1 text-sm hidden"></p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1" id="document_label">Nome Completo *</label>
+                    <input type="text" id="customer_name" name="customer_name" value="{{ old('customer_name') }}" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 @error('customer_name') border-red-500 @enderror">
+                    @error('customer_name')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 <!-- Data de Nascimento (Pessoa Física) -->

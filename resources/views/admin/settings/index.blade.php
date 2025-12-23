@@ -418,6 +418,49 @@
                             Mensagem padrão que será enviada quando o cliente entrar em contato
                         </p>
                     </div>
+
+                    <div>
+                        <label for="admin_whatsapp_number" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            WhatsApp do Admin (Notificações) <span class="text-red-500">*</span>
+                        </label>
+                        <div class="mt-1">
+                            <input type="text" 
+                                   name="admin_whatsapp_number" 
+                                   id="admin_whatsapp_number"
+                                   value="{{ old('admin_whatsapp_number', $settings['admin_whatsapp_number'] ?? '') }}" 
+                                   class="form-input @error('admin_whatsapp_number') border-red-300 focus:border-red-500 focus:ring-red-500 @enderror" 
+                                   placeholder="5511999999999">
+                        </div>
+                        @error('admin_whatsapp_number')
+                            <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                        @enderror
+                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                            Número do WhatsApp do administrador para receber notificações de novos pedidos (com código do país, ex: 5511999999999)
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Link para Evolution API -->
+        <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
+            <div class="px-4 py-5 sm:p-6">
+                <div class="border-b border-gray-200 dark:border-gray-700 pb-4 mb-4">
+                    <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-white">
+                        Evolution API - Integração WhatsApp
+                    </h3>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                        Configure a integração com a Evolution API para envio de mensagens pelo WhatsApp
+                    </p>
+                </div>
+
+                <div class="space-y-4">
+                    <p class="text-sm text-gray-700 dark:text-gray-300">
+                        A configuração da Evolution API foi movida para uma página dedicada. 
+                        <a href="{{ route('admin.evolution-api.index') }}" class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 font-medium">
+                            Clique aqui para configurar a Evolution API
+                        </a>
+                    </p>
                 </div>
             </div>
         </div>

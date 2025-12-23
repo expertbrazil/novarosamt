@@ -36,6 +36,7 @@ class SettingsController extends Controller
             'orders_logo' => 'nullable|image|mimes:jpg,jpeg,png,svg|max:2048',
             'whatsapp_number' => 'nullable|string|max:20',
             'whatsapp_message' => 'nullable|string|max:500',
+            'admin_whatsapp_number' => 'nullable|string|max:20',
             'payment_recipient_name' => 'nullable|string|max:255',
             'payment_pix_key' => 'nullable|string|max:255',
             
@@ -57,6 +58,7 @@ class SettingsController extends Controller
             
             // Google Analytics
             'google_analytics_id' => 'nullable|string|max:50',
+            
         ]);
 
         // Handle logo upload
@@ -90,6 +92,13 @@ class SettingsController extends Controller
         
         if ($request->filled('whatsapp_message')) {
             Settings::set('whatsapp_message', $request->whatsapp_message, 'text', 'Mensagem padrão do WhatsApp');
+        }
+        
+        // Admin WhatsApp (para notificações de pedidos)
+        if ($request->filled('admin_whatsapp_number')) {
+            Settings::set('admin_whatsapp_number', $request->admin_whatsapp_number, 'string', 'Número do WhatsApp do Admin para notificações');
+        } else {
+            Settings::set('admin_whatsapp_number', '', 'string', 'Número do WhatsApp do Admin para notificações');
         }
 
         // Delivery Settings
@@ -144,6 +153,7 @@ class SettingsController extends Controller
             Settings::set('google_analytics_id', '', 'string', 'ID de medição do Google Analytics (G-XXXXXXXXXX)');
         }
 
+
         return redirect()->route('admin.settings.index')
             ->with('success', 'Parâmetros atualizados com sucesso!');
     }
@@ -164,4 +174,5 @@ class SettingsController extends Controller
             })
         );
     }
+
 }

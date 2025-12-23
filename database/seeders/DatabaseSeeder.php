@@ -124,6 +124,13 @@ class DatabaseSeeder extends Seeder
         Settings::set('smtp_from_address', '', 'string', 'Email remetente');
         Settings::set('smtp_from_name', 'Nova Rosa MT', 'string', 'Nome remetente');
         
+        // Evolution API Settings
+        Settings::set('evolution_api_enabled', '0', 'boolean', 'Ativar/Desativar uso da Evolution API');
+        Settings::set('evolution_api_url', '', 'string', 'URL base da Evolution API');
+        Settings::set('evolution_api_key', '', 'string', 'Chave de autenticação da Evolution API (API Key)');
+        Settings::set('evolution_instance_name', 'default', 'string', 'Nome da instância do WhatsApp na Evolution API');
+        Settings::set('evolution_whatsapp_number', '', 'string', 'Número do WhatsApp conectado na instância');
+        
         // Estados e Municípios - descomente a linha abaixo para popular
         // $this->call(EstadosMunicipiosSeeder::class);
     }

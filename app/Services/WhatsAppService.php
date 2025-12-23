@@ -8,23 +8,62 @@ use Illuminate\Support\Facades\Log;
 
 class WhatsAppService
 {
+    protected EvolutionApiService $evolutionApi;
+
+    public function __construct(EvolutionApiService $evolutionApi)
+    {
+        $this->evolutionApi = $evolutionApi;
+    }
+
+    /**
+     * Retorna instância do EvolutionApiService
+     */
+    public function getEvolutionApi(): EvolutionApiService
+    {
+        return $this->evolutionApi;
+    }
+
     public function sendOrder(Order $order): bool
     {
         try {
-            $apiUrl = config('services.whatsapp.url');
-            $apiToken = config('services.whatsapp.token');
-            $phoneNumber = config('services.whatsapp.phone_number');
+            $message = $this->formatOrderMessage($order);
+            $phoneNumber = $order->customer_phone;
 
-            if (!$apiUrl || !$apiToken || !$phoneNumber) {
-                Log::warning('WhatsApp configuration missing');
+            if (!$phoneNumber) {
+                Log::warning('WhatsApp: Número de telefone do cliente não encontrado', ['order_id' => $order->id]);
                 return false;
             }
 
-            $message = $this->formatOrderMessage($order);
+            // Tenta usar Evolution API primeiro se estiver configurada
+            if ($this->evolutionApi->isConfigured()) {
+                $result = $this->evolutionApi->sendTextMessage($phoneNumber, $message);
+                
+                if ($result['success']) {
+                    $order->update(['whatsapp_sent_at' => now()]);
+                    Log::info('Mensagem de pedido enviada via Evolution API', ['order_id' => $order->id]);
+                    return true;
+                } else {
+                    Log::error('Erro ao enviar mensagem via Evolution API', [
+                        'order_id' => $order->id,
+                        'error' => $result['error'] ?? 'Erro desconhecido'
+                    ]);
+                    return false;
+                }
+            }
+
+            // Fallback para sistema antigo (config/services.php)
+            $apiUrl = config('services.whatsapp.url');
+            $apiToken = config('services.whatsapp.token');
+            $defaultPhoneNumber = config('services.whatsapp.phone_number');
+
+            if (!$apiUrl || !$apiToken || !$defaultPhoneNumber) {
+                Log::warning('WhatsApp configuration missing - Evolution API e sistema antigo não configurados');
+                return false;
+            }
 
             $response = Http::withToken($apiToken)
                 ->post($apiUrl, [
-                    'phone' => $phoneNumber,
+                    'phone' => $defaultPhoneNumber,
                     'message' => $message,
                 ]);
 
@@ -140,10 +179,28 @@ MESSAGE;
     public function sendDirectMessage(string $phoneNumber, string $message): bool
     {
         try {
+            // Tenta usar Evolution API primeiro se estiver configurada
+            if ($this->evolutionApi->isConfigured()) {
+                $result = $this->evolutionApi->sendTextMessage($phoneNumber, $message);
+                
+                if ($result['success']) {
+                    Log::info('Mensagem direta enviada via Evolution API', ['phone' => $phoneNumber]);
+                    return true;
+                } else {
+                    Log::error('Erro ao enviar mensagem direta via Evolution API', [
+                        'phone' => $phoneNumber,
+                        'error' => $result['error'] ?? 'Erro desconhecido'
+                    ]);
+                    return false;
+                }
+            }
+
+            // Fallback para sistema antigo
             $apiUrl = config('services.whatsapp.url');
             $apiToken = config('services.whatsapp.token');
 
             if (!$apiUrl || !$apiToken) {
+                Log::warning('WhatsApp configuration missing - Evolution API e sistema antigo não configurados');
                 return false;
             }
 
