@@ -22,13 +22,24 @@
     @endif
     
     <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}?v={{ time() }}">
-    @if(file_exists(public_path('favicon-32x32.png')))
-    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}?v={{ time() }}">
+    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
+    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
+    @if(file_exists(public_path('favicon-96x96.png')))
+    <link rel="icon" type="image/png" sizes="96x96" href="{{ asset('favicon-96x96.png') }}">
     @endif
-    @if(file_exists(public_path('favicon-16x16.png')))
-    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}?v={{ time() }}">
+    @if(file_exists(public_path('apple-touch-icon.png')))
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
     @endif
+    @if(file_exists(public_path('web-app-manifest-192x192.png')))
+    <link rel="icon" type="image/png" sizes="192x192" href="{{ asset('web-app-manifest-192x192.png') }}">
+    @endif
+    @if(file_exists(public_path('web-app-manifest-512x512.png')))
+    <link rel="icon" type="image/png" sizes="512x512" href="{{ asset('web-app-manifest-512x512.png') }}">
+    @endif
+    @if(file_exists(public_path('site.webmanifest')))
+    <link rel="manifest" href="{{ asset('site.webmanifest') }}">
+    @endif
+    <meta name="theme-color" content="#6366f1">
     @if(file_exists(public_path('apple-touch-icon.png')))
     <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}?v={{ time() }}">
     @endif

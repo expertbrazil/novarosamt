@@ -480,18 +480,56 @@
 
 <!-- Entrega Section -->
 @if(count($deliveryCities) > 0 || $deliveryInfo)
-<div class="py-16 bg-white dark:bg-gray-800">
+@php
+    // Agrupar cidades por estado
+    $citiesByState = $deliveryCities->groupBy('estado');
+@endphp
+<div class="pt-16 pb-20 bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         @if(count($deliveryCities) > 0)
-        <div class="mb-8">
-            <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4 text-center">
-                Cidades Atendidas
-            </h3>
-            <div class="flex flex-wrap justify-center gap-3">
-                @foreach($deliveryCities as $city)
-                <div class="bg-indigo-600 dark:bg-indigo-600 rounded-lg p-3 text-center min-w-[150px]">
-                    <p class="text-sm font-medium text-white dark:text-white">{{ $city->municipio }}</p>
-                    <p class="text-xs text-indigo-100 dark:text-indigo-100">{{ $city->estado }}</p>
+        <div class="mb-12">
+            <!-- Título Principal -->
+            <div class="text-center mb-12 pt-8">
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-indigo-600 rounded-full mb-4">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                </div>
+                <h2 class="text-4xl font-bold text-gray-900 dark:text-white mb-2">
+                    Cidades Atendidas
+                </h2>
+                <p class="text-lg text-gray-600 dark:text-gray-400">
+                    Entregamos nossos produtos nas seguintes localidades
+                </p>
+            </div>
+
+            <!-- Cidades Agrupadas por Estado -->
+            <div class="space-y-8">
+                @foreach($citiesByState as $estado => $cities)
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 md:p-8">
+                    <div class="flex items-center mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
+                        <div class="flex items-center space-x-2">
+                            <svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 002 2h2.945M15 11a3 3 0 11-6 0m6 0a3 3 0 10-6 0m6 0h.01M21 11a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <h3 class="text-xl font-bold text-gray-900 dark:text-white">
+                                {{ $estado }}
+                            </h3>
+                            <span class="px-2 py-1 bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 rounded-full text-xs font-semibold">
+                                {{ $cities->count() }} {{ $cities->count() === 1 ? 'cidade' : 'cidades' }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                        @foreach($cities as $city)
+                        <div class="group relative bg-gradient-to-br from-indigo-600 to-purple-600 dark:from-indigo-700 dark:to-purple-700 rounded-xl p-4 text-center transform transition-all duration-200 hover:scale-105 hover:shadow-lg">
+                            <div class="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 rounded-xl transition-opacity duration-200"></div>
+                            <p class="text-sm font-semibold text-white mb-1 relative z-10">{{ $city->municipio }}</p>
+                            <p class="text-xs text-indigo-100 dark:text-indigo-200 relative z-10">{{ $city->estado }}</p>
+                        </div>
+                        @endforeach
+                    </div>
                 </div>
                 @endforeach
             </div>
@@ -499,12 +537,19 @@
         @endif
 
         @if($deliveryInfo)
-        <div class="mt-8 p-6 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg">
+        <div class="mt-12 bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-700 dark:to-purple-700 rounded-2xl shadow-xl p-8 md:p-10">
             <div class="flex items-start">
-                <svg class="w-6 h-6 text-indigo-600 dark:text-indigo-400 mr-3 mt-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                <div class="text-gray-700 dark:text-gray-300 whitespace-pre-line">{{ $deliveryInfo }}</div>
+                <div class="flex-shrink-0">
+                    <div class="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="ml-4 flex-1">
+                    <h3 class="text-xl font-bold text-white mb-3">Informações de Entrega</h3>
+                    <div class="text-indigo-50 dark:text-indigo-100 whitespace-pre-line text-base leading-relaxed">{{ $deliveryInfo }}</div>
+                </div>
             </div>
         </div>
         @endif

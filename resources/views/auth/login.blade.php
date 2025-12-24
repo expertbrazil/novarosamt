@@ -7,6 +7,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Nova Rosa MT</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
+    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
+    @if(file_exists(public_path('favicon-96x96.png')))
+    <link rel="icon" type="image/png" sizes="96x96" href="{{ asset('favicon-96x96.png') }}">
+    @endif
+    @if(file_exists(public_path('apple-touch-icon.png')))
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
+    @endif
+    @if(file_exists(public_path('web-app-manifest-192x192.png')))
+    <link rel="icon" type="image/png" sizes="192x192" href="{{ asset('web-app-manifest-192x192.png') }}">
+    @endif
+    @if(file_exists(public_path('web-app-manifest-512x512.png')))
+    <link rel="icon" type="image/png" sizes="512x512" href="{{ asset('web-app-manifest-512x512.png') }}">
+    @endif
+    @if(file_exists(public_path('site.webmanifest')))
+    <link rel="manifest" href="{{ asset('site.webmanifest') }}">
+    @endif
+    <meta name="theme-color" content="#6366f1">
+    
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
         body {
