@@ -12,10 +12,18 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('banners', function (Blueprint $table) {
-            $table->string('title')->after('id');
-            $table->string('image_desktop')->nullable()->after('title');
-            $table->string('image_mobile')->nullable()->after('image_desktop');
-            $table->boolean('is_active')->default(true)->after('image_mobile');
+            if (!Schema::hasColumn('banners', 'title')) {
+                $table->string('title')->after('id');
+            }
+            if (!Schema::hasColumn('banners', 'image_desktop')) {
+                $table->string('image_desktop')->nullable()->after('title');
+            }
+            if (!Schema::hasColumn('banners', 'image_mobile')) {
+                $table->string('image_mobile')->nullable()->after('image_desktop');
+            }
+            if (!Schema::hasColumn('banners', 'is_active')) {
+                $table->boolean('is_active')->default(true)->after('image_mobile');
+            }
         });
     }
 
